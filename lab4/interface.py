@@ -266,7 +266,7 @@ class Interface(QWidget):
                 self.winLines.add_point(Point(self, axisPos[0], axisPos[1], axisPos[2], axisPos[3], check=True))
                 self.selectPoint(self.winLines.points[-1])
         elif (not self.addPoint):
-            self.lockRects = True
+#             self.lockRects = True
             self.addPoint = True
             axisPos = self.searchCursorRectCross(mouse.pos(), rect)
             self.pos = axisPos
