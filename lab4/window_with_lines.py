@@ -81,15 +81,30 @@ class WindowLines:
 
     # красный прямоугольник оу еееее
     def draw_rect(self) -> None:
+        width = self.widget.width()
+        height = self.widget.height()
+        x1 = width / 6
+        y1 = height * 1 / 5
+        x2 = width - 2 * x1
+        y2 = height - 2 * y1
         self.initPainter()
-        self.painter.drawRect(200,80,450,380)
+        self.painter.drawRect(x1, y1, x2, y2)
         self.painter.end()
+
+
     # Выделение синим цветом для линий внутри прямоугольника
     def glowInsideLines(self) -> None:
         line: List = []
+        width = self.widget.width()
+        height = self.widget.height()
+        x1 = width / 6
+        y1 = height * 1 / 5
+        x2 = width - 2 * x1
+        y2 = height - 2 * y1
         for i in range(0, len(self.screenP), 2): # Ну тут просто обзодим массив точек с коордиатами экрана
             if (i+1) < len(self.screenP):
-                line = algo.cohenSutherlandClip(self.screenP[i].x(), self.screenP[i].y(), self.screenP[i+1].x(), self.screenP[i+1].y())
+                line = algo.cohenSutherlandClip(self.screenP[i].x(), self.screenP[i].y(), self.screenP[i+1].x(), self.screenP[i+1].y(),
+                                                x1, x1 + x2, y1, y1 + y2)
                 if line != 0:
                     self.painter = QPainter(self.widget)
                     self.painter.setPen(self.innerPen)
@@ -101,9 +116,9 @@ class WindowLines:
     def draw(self) -> None:
         self.toScreen()
         self.draw_lines()
-        self.draw_points()
         self.draw_rect()
         self.glowInsideLines()
+        self.draw_points()
 
 
     def toScreen(self) -> None: 

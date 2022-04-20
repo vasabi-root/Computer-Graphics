@@ -5,15 +5,9 @@ RIGHT = 2  # 0010
 BOTTOM = 4  # 0100
 TOP = 8  # 1000
 
-# Определение x_max, y_max и x_min, y_min для прямоугольника
-x_max = 650.0
-y_max = 460.0
-x_min = 200.0
-y_min = 80.0
-
 
 # Функция для вычисления кода региона для точки (x, y)
-def computeCode(x, y):
+def computeCode(x, y, x_min, x_max, y_min, y_max):
     code = INSIDE
     if x < x_min:  # слева от прямоугольника
         code |= LEFT
@@ -27,10 +21,14 @@ def computeCode(x, y):
 
 
 # Реализация алгоритма Коэна-Сазерленда
-def cohenSutherlandClip(x1, y1, x2, y2):
+def cohenSutherlandClip(x1, y1, x2, y2, a, b, c, d):
     # Вычислить коды регионов для P1, P2
-    code1 = computeCode(x1, y1)
-    code2 = computeCode(x2, y2)
+    x_min = a
+    x_max = b
+    y_min = c
+    y_max = d
+    code1 = computeCode(x1, y1, x_min, x_max, y_min, y_max)
+    code2 = computeCode(x2, y2, x_min, x_max, y_min, y_max)
     accept = False
     while True:
         # Если обе конечные точки лежат в прямоугольнике
@@ -72,14 +70,16 @@ def cohenSutherlandClip(x1, y1, x2, y2):
         if code_out == code1:
             x1 = x
             y1 = y
-            code1 = computeCode(x1, y1)
+            code1 = computeCode(x1, y1, x_min, x_max, y_min, y_max)
 
         else:
             x2 = x
             y2 = y
-            code2 = computeCode(x2, y2)
+            code2 = computeCode(x2, y2, x_min, x_max, y_min, y_max)
 
     if accept:
         return [x1, y1, x2, y2]
     else:
+        print("nope")
         return 0
+
