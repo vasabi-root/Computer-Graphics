@@ -2,11 +2,14 @@ from typing import List
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPen
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPainter, QBrush, QPen, QColor
+from PyQt5.QtCore import QPointF
 
 from shared import Colors, RotationMatrices, normalize
 
 from point import Point
 from line import Line
+import algo
 import numpy as np
 
 from axis import Axis
@@ -29,7 +32,9 @@ class WindowLines:
 
         self.outerPen = QPen(Colors.YELLOW_COLOR, 2, Qt.SolidLine) # Кисть для линий вне экрана
         self.innerPen = QPen(Colors.BLUE_COLOR, 2, Qt.SolidLine) # Кисть для линий внутри экрана
-        
+        self.setWidget(widget)
+
+
     def moveToCentre(self) -> None:
         mX = min([p.x() for p in self.points])
         mY = min([p.y() for p in self.points])
@@ -60,11 +65,46 @@ class WindowLines:
         for l in self.lines:
             l.draw()
 
+    def initPainter(self) -> None:
+        '''
+        Инициализация рисовалки
+        '''
+        self.painter = QPainter(self.widget)
+        self.painter.setPen(QColor(255, 0, 0))
+        self.painter.setRenderHints(QPainter.Antialiasing)
+
+    def setWidget(self, widget: QWidget) -> None:
+        '''
+        Дать понять рисовалке на чем рисовать
+        '''
+        self.widget = widget
+
+    # красный прямоугольник оу еееее
+    def draw_rect(self) -> None:
+        self.initPainter()
+        self.painter.drawRect(200,80,450,380)
+        self.painter.end()
+    # Выделение синим цветом для линий внутри прямоугольника
+    def glowInsideLines(self) -> None:
+        line: List = []
+        for i in range(0, len(self.screenP), 2): # Ну тут просто обзодим массив точек с коордиатами экрана
+            if (i+1) < len(self.screenP):
+                line = algo.cohenSutherlandClip(self.screenP[i].x(), self.screenP[i].y(), self.screenP[i+1].x(), self.screenP[i+1].y())
+                if line != 0:
+                    self.painter = QPainter(self.widget)
+                    self.painter.setPen(self.innerPen)
+                    self.painter.setRenderHints(QPainter.Antialiasing)
+                    self.painter.drawLine(QPointF(line[0], line[1]), QPointF(line[2], line[3]))
+                    self.painter.end()
+
 
     def draw(self) -> None:
         self.toScreen()
         self.draw_lines()
         self.draw_points()
+        self.draw_rect()
+        self.glowInsideLines()
+
 
     def toScreen(self) -> None: 
         '''
