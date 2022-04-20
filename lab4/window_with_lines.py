@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPen
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QBrush, QPen, QColor
-from PyQt5.QtCore import QPointF
+from PyQt5.QtCore import QPointF, QRectF
 
 from shared import Colors, RotationMatrices, normalize
 
@@ -88,7 +88,7 @@ class WindowLines:
         x2 = width - 2 * x1
         y2 = height - 2 * y1
         self.initPainter()
-        self.painter.drawRect(x1, y1, x2, y2)
+        self.painter.drawRect(QRectF(x1, y1, x2, y2))
         self.painter.end()
 
 
