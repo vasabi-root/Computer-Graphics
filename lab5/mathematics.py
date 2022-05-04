@@ -143,6 +143,10 @@ def eq_poly(A: List, B: List, C: List, M: List) -> List: # Ax + By + Cz + D = 0
 
     return [detX, -detY, detZ, -(Mx*detX - My*detY + Mz*detZ)]
 
+def get_z_in_poly(x: float, y: float, poly: List) -> float:
+    if poly[2] != 0:
+        return -(poly[0]*x+poly[1]*y+poly[3]) / poly[2]
+    return None
 
 def line_poly_cross(line: List, poly: List) -> List:
     ''' 

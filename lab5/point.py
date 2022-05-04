@@ -35,7 +35,7 @@ class Point:
             check: bool = False,
 
             is_selected: bool = False, 
-            is_curve: bool = False) -> None:   
+            is_light: bool = False) -> None:   
 
         self.__class__.instances.append(self)
 
@@ -43,7 +43,7 @@ class Point:
         self.matrix = matrix
         self.setCoords(x, y, z, w, check)
         self.setIsSelected(is_selected)
-        self.setIsCurve(is_curve)
+        self.setIsLight(is_light)
 
     def __str__(self) -> str:
         return f'Point ({self.x()}, {self.y()}, {self.z()}, {self.w()})'
@@ -89,9 +89,9 @@ class Point:
         if self.is_selected:
             self.painter.setPen(QPen(Colors.RED_COLOR, 1, Qt.SolidLine))
             self.painter.setBrush(QBrush(Colors.RED_COLOR, Qt.SolidPattern))
-        elif self.is_curve:
-            self.painter.setPen(QPen(Colors.BLUE_COLOR, 1, Qt.SolidLine))
-            self.painter.setBrush(QBrush(Colors.BLUE_COLOR, Qt.SolidPattern))
+        elif self.is_light:
+            self.painter.setPen(QPen(Colors.WHITE_COLOR, 1, Qt.SolidLine))
+            self.painter.setBrush(QBrush(Colors.WHITE_COLOR, Qt.SolidPattern))
         # elif self.is_anime:
         #     self.painter.setPen(QPen(Colors.YELLOW_COLOR, 1, Qt.SolidLine))
         #     self.painter.setBrush(QBrush(Colors.YELLOW_COLOR, Qt.SolidPattern))
@@ -100,11 +100,13 @@ class Point:
             self.painter.setBrush(QBrush(Colors.GREEN_COLOR, Qt.SolidPattern))
         self.painter.setRenderHints(QPainter.Antialiasing)
         
-    def setIsCurve(self, is_curve: bool) -> None:
+    def setIsLight(self, is_light: bool) -> None:
         '''
         Флаг принадлежности точки к кривой Безье
         '''
-        self.is_curve = is_curve
+        self.is_light = is_light
+        if is_light:
+            self.intensity = 0.5
         
     def setIsSelected(self, is_selected: bool) -> None:
         '''
@@ -113,7 +115,14 @@ class Point:
         self.is_selected = is_selected
     
     def initScreen(self) -> None:
-        self.screen = np.dot(self.matrix, self.coords)
+        # m = [ [1, 0, 0, 0],
+        #       [0, 1, 0, 0],
+        #       [0, 0, 1, 0],
+        #       [0, 0, 0.5/Config.AXIS_LINE_LENGTH, 1] ]
+        # matrix = np.dot(m, self.matrix)
+        screen = np.dot(self.matrix, self.coords)
+        # screen = np.dot(m, screen)
+        self.screen = np.divide(screen, screen[3])
 
     
     def draw(self) -> None:

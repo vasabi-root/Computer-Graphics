@@ -72,8 +72,17 @@ class Line:
         self.painter.setRenderHints(QPainter.Antialiasing)
 
     def initScreen(self) -> None:
-        self.screen = [ np.dot(self.matrix, self.coords[0]),
-                        np.dot(self.matrix, self.coords[1]) ]
+        # m = [ [1, 0, 0, 0],
+        #       [0, 1, 0, 0],
+        #       [0, 0, 1, 0],
+        #       [0, 0, 0.5/Config.AXIS_LINE_LENGTH, 1] ]
+        # matrix = np.dot(m, self.matrix)
+        screen = [ np.dot(self.matrix, self.coords[0]),
+                   np.dot(self.matrix, self.coords[1]) ]
+        # screen = [ np.dot(m, screen[0]), 
+        #            np.dot(m, screen[1]) ]
+        self.screen = [np.divide(screen[0], screen[0][3]),
+                       np.divide(screen[1], screen[1][3])]
         
     def setWidget(self, widget: QWidget) -> None:
         '''
@@ -89,10 +98,10 @@ class Line:
                        [self.coords[1][0] + dx, self.coords[1][1] + dy, self.coords[1][2] + dz, self.coords[1][3]])
     
     def setPos(self, x: float, y: float, z: float, w: float = 1,  check: bool = True) -> None:
-        [x, y, z] = Config.checkLimits(x, y, z)
-
-        self.coords[0] = np.array([x, y, z, w])
-        self.coords[1] = np.array([x + self.diffCoords[0], y + self.diffCoords[1], z + self.diffCoords[2], w])
+        [x1, y1, z1] = Config.checkLimits(x, y, z)
+        [x2, y2, z2] = Config.checkLimits(x + self.diffCoords[0], y + self.diffCoords[1], z + self.diffCoords[2])
+        self.coords[0] = np.array([x1, y1, z1, w])
+        self.coords[1] = np.array([x2, y2, z2, w])
     
     def draw(self) -> None:
         '''

@@ -46,7 +46,7 @@ class Interface(QWidget):
 
     pos: np.array
 
-    points: List[Point]
+    light: Point
 
     pyramid: PolyFigure
     cube: PolyFigure
@@ -57,6 +57,7 @@ class Interface(QWidget):
         self.qp = QPainter()                # Просто специальная рисовалка
         self.axis: Axis = Axis(self)
         # self.winLines : WindowLines = WindowLines(self, self.axis)
+        self.light = Point(self, self.axis.matrix, 2, 2, 2, is_light=True)
         self.initRects()
 
         self.selected_point: Point = None
@@ -71,6 +72,8 @@ class Interface(QWidget):
                      73: False, 75: False, 79: False, 76: False, 80: False, 59: False}
         self.isWheelMoved = False
 
+        
+
         self.initFigures()
 
     def initRects(self) -> None:
@@ -84,21 +87,21 @@ class Interface(QWidget):
                [0, 1, 0],
                [0, 1, 1],
                [0, 0, 1] ]
-        self.rectangleX = Polygon(self, self.axis.matrix, pX, penFill, penLines)
+        self.rectangleX = Polygon(self, self.axis.matrix, pX, penFill, penLines, self.light)
         self.cursorOnX = False
 
         pY = [ [0, 0, 0],
                [0, 0, 1],
                [1, 0, 1],
                [1, 0, 0] ]
-        self.rectangleY = Polygon(self, self.axis.matrix, pY, penFill, penLines)
+        self.rectangleY = Polygon(self, self.axis.matrix, pY, penFill, penLines, self.light)
         self.cursorOnY = False
 
         pZ = [ [0, 0, 0],
                [1, 0, 0],
                [1, 1, 0],
                [0, 1, 0] ]
-        self.rectangleZ = Polygon(self, self.axis.matrix, pZ, penFill, penLines)
+        self.rectangleZ = Polygon(self, self.axis.matrix, pZ, penFill, penLines, self.light)
         self.cursorOnZ = False
 
         self.lockRects = True
@@ -111,62 +114,42 @@ class Interface(QWidget):
         '''
         penFill = QPen(Colors.BLUE_COLOR, 1, Qt.SolidLine)
         penBorder = QPen(Colors.YELLOW_COLOR, 1, Qt.SolidLine)
+        A = [0.75, 0.5, 0]
+        B = [0.25, 0.25, 0]
+        C = [0.25, 0.75, 0]
+        D = [0.42, 0.5, 0.5]
 
         pyramidList = [ 
-            [ [0.75, 0.5, 0],
-              [0.25, 0.25, 0],
-              [0.25, 0.75, 0] ],
-
-            [ [0.75, 0.5, 0],
-              [0.42, 0.5, 0.5],
-              [0.25, 0.75, 0] ],
-
-            [ [0.75, 0.5, 0],
-              [0.42, 0.5, 0.5],
-              [0.25, 0.25, 0] ],
-
-            [ [0.25, 0.25, 0],
-              [0.42, 0.5, 0.5],
-              [0.25, 0.75, 0] ]
+            [A, B, C], 
+            [A, D, B],
+            [C, D, A],
+            [B, D, C]
         ]
 
         pyramidPoint = Point(self, self.axis.matrix, 0.42, 0.5, -0.25)
-        self.pyramid = PolyFigure(self, self.axis.matrix, pyramidPoint, pyramidList, penFill, penBorder)
+        self.pyramid = PolyFigure(self, self.axis.matrix, pyramidPoint, pyramidList, penFill, penBorder, self.light, True)
+
+        A1 = [1.5, 1, 0]
+        B1 = [1.5, 0.5, 0]
+        C1 = [1, 0.5, 0]
+        D1 = [1, 1, 0]
+
+        A2 = [1.5, 1, 0.5]
+        B2 = [1.5, 0.5, 0.5]
+        C2 = [1, 0.5, 0.5]
+        D2 = [1, 1, 0.5]
 
         cubeList = [
-            [ [1.5, 1, 0],
-              [1.5, 0.5, 0],
-              [1, 0.5, 0],
-              [1, 1, 0] ],
-
-            [ [1.5, 1, 0],
-              [1.5, 0.5, 0],
-              [1.5, 0.5, 0.5],
-              [1.5, 1, 0.5] ],
-
-            [ [1.5, 0.5, 0],
-              [1, 0.5, 0],
-              [1, 0.5, 0.5],
-              [1.5, 0.5, 0.5] ],
-
-            [ [1, 0.5, 0],
-              [1, 1, 0],
-              [1, 1, 0.5],
-              [1, 0.5, 0.5] ],
-
-            [ [1, 1, 0] ,
-              [1.5, 1, 0],
-              [1.5, 1, 0.5],
-              [1, 1, 0.5] ],
-
-            [ [1.5, 1, 0.5],
-              [1.5, 0.5, 0.5],
-              [1, 0.5, 0.5],
-              [1, 1, 0.5] ]
+            [ A1, B1, C1, D1 ],
+            [ A2, B2, B1, A1 ],
+            [ B2, C2, C1, B1 ],
+            [ C2, D2, D1, C1 ],
+            [ D2, A2, A1, D1 ],
+            [ D2, C2, B2, A2 ]
         ]
         
         cubePoint = Point(self, self.axis.matrix, 1.25, 0.75, -0.25)
-        self.cube = PolyFigure(self, self.axis.matrix, cubePoint, cubeList, penFill, penBorder)
+        self.cube = PolyFigure(self, self.axis.matrix, cubePoint, cubeList, penFill, penBorder, self.light, True)
 
     def paintEvent(self, event) -> None:
         '''
@@ -278,6 +261,7 @@ class Interface(QWidget):
         self.drawRects()
         self.pyramid.draw()
         self.cube.draw()
+        self.light.draw()
         # self.winLines.draw()
         
     def checkPointIntersectionEvent(self, pos: QPoint) -> Point:

@@ -49,6 +49,10 @@ class Axis:
         Инициализация матрицы осей
         '''
         self.matrix = None
+        # self.matrix = [ [1, 0, 0, 0],
+        #                 [0, 1, 0, 0],
+        #                 [0, 0, 1, 0],
+        #                 [0, 0, 0.5/Config.AXIS_LINE_LENGTH, 1] ]
         self.setCenterCoords(center_x, center_y)
         self.setScale(axis_line_length)
         self.rotate_x(120.0, is_init=True)

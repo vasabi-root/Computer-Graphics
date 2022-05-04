@@ -53,6 +53,7 @@ class Colors:
     RED_COLOR = Qt.red
     RED_A120 = QColor(255, 0, 0, 120)
     BLACK_COLOR = Qt.black
+    WHITE_COLOR = Qt.white
     BLACK_A100 = QColor(0, 0, 0, 100)
     TRANSPARENT = QColor(0, 0, 0, 0)
 
@@ -124,3 +125,10 @@ class RotationMatrices:
             [0, 0, sz, 0],
             [0, 0, 0, 1],
         ], dtype=np.float64)
+
+class Light:
+    '''
+    Работа со светом
+    '''
+    @staticmethod
+    

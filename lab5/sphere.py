@@ -13,8 +13,8 @@ class Sphere(Figure):
     radius: float
     image: QImage
 
-    def __init__(self, widget: QWidget, matrix: np.array, controlDot: Point, coords: List, radius: float, penFill: QPen, penBorder: QPen) -> None:
-        super().__init__(widget, matrix, controlDot, penFill, penBorder)
+    def __init__(self, widget: QWidget, matrix: np.array, controlDot: Point, coords: List, radius: float, penFill: QPen, penBorder: QPen, light: List[Point]) -> None:
+        super().__init__(widget, matrix, controlDot, penFill, penBorder, light[0])
 
         self.coords = coords
         self.radius = radius

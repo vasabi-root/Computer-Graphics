@@ -21,10 +21,13 @@ class Figure:
 
     penFill: QPen           # цвет заливки
     penBorder: QPen         # цвет границы
+    light: Point            # источник света
+
+    isLight: bool
 
     diffCoords: List        # расстояния от контрольной точки до линий (для перемещения фигуры)
 
-    def __init__(self, widget: QWidget, matrix: np.array, controlDot: Point, penFill: QPen, penBorder: QPen) -> None:
+    def __init__(self, widget: QWidget, matrix: np.array, controlDot: Point, penFill: QPen, penBorder: QPen, light: Point, isLight: bool = False) -> None:
         self.__class__.instances.append(self) # учёт всех объектов
 
         self.widget = widget
@@ -32,6 +35,9 @@ class Figure:
 
         self.penFill = penFill
         self.penBorder = penBorder
+        self.light = light
+
+        self.isLight = isLight
 
         self.controlDot = controlDot
 
