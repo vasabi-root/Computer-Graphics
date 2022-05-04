@@ -42,15 +42,20 @@ class Sphere(Figure):
             reverse = np.linalg.inv(self.matrix)
             color = self.penFill.color()
 
-            step = 0.06
+            step = 0.14
 
             theta = np.pi/2
+            pixSize = 4
             while (theta <= np.pi):
                 fi = 0
+                R = self.radius
+                if (np.pi/2 < theta < np.pi/2+3*step):
+                    R += pixSize
                 while (fi < 2*np.pi):
-                    x = screen[0] + self.radius*np.sin(theta)*np.cos(fi)
-                    y = screen[1] + self.radius*np.sin(theta)*np.sin(fi)
-                    z = screen[2] + self.radius*np.cos(theta)
+
+                    x = screen[0] + R*np.sin(theta)*np.cos(fi)
+                    y = screen[1] + R*np.sin(theta)*np.sin(fi)
+                    z = screen[2] + R*np.cos(theta)
                     P = np.dot(reverse, np.array([x, y, z, 1]))
                     N = np.array([P[0] - coords[0], P[1] - coords[1], P[2] - coords[2]])
                     # N[3] = 1
@@ -58,8 +63,12 @@ class Sphere(Figure):
                     i = Light.computeLightForDot(self.light, P, N)
                     c = qRgba(int(color.red()*i), int(color.green()*i), int(color.blue()*i), color.alpha())
                     # print(x, y, i)
-                    self.setPix(x, y, c)
-                    fi += step
+                    if (np.pi/2 < theta < np.pi/2+3*step):
+                        self.setPix(x, y, c, -1, 2)
+                        fi += 0.03
+                    else:
+                        self.setPix(x, y, c, -pixSize, pixSize+1)
+                        fi += step
                 theta += step
 
         self.initPainter(self.penFill)
@@ -69,12 +78,12 @@ class Sphere(Figure):
         self.controlDot.draw()
                 
 
-    def setPix(self, x: float, y: float, c: int):
+    def setPix(self, x: float, y: float, c: int, start, end):
         if 0 <= x+1 < self.widget.width()-1 and 0 <= y+1 < self.widget.height()-1:
             # for i in [0, 1]
             points = []
-            for i in [-1, 0, 1]:
-                for j in [-1, 0, 1]:
+            for i in range(start, end):
+                for j in range(start, end):
                     self.image.setPixel(QPointF(x+i, y+j).toPoint(), c)
             # p1 = QPointF(x, y)
             # p2 = QPointF(x+1, y)
