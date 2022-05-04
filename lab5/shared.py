@@ -131,4 +131,12 @@ class Light:
     Работа со светом
     '''
     @staticmethod
-    
+    def computeLightForDot(light, P: np.array, N: np.array) -> float: 
+        i = 0.5
+        l = light.coords - P
+        L = np.array([l[0], l[1], l[2]])
+        N_dot_L = L.dot(N)
+        if (N_dot_L > 0):
+            # print(N_dot_L, self.light.intensity)
+            i += light.intensity*N_dot_L / (np.sqrt((N*N).sum())* np.sqrt((L*L).sum()))
+        return i

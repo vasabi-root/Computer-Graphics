@@ -47,6 +47,8 @@ class PolyFigure(Figure):
                         break
                     i += 1
                 polyVerts.insert(i, z)
+            # for p in polyVerts:
+            #     print(p)
             i = 0
             flag = True
             while (i < len(zBuff) and flag):
@@ -61,10 +63,9 @@ class PolyFigure(Figure):
                         i -= 1
                         break
                 i += 1
+            # print (i)
             zBuff.insert(i, [poly, polyVerts])
 
         for item in zBuff:
             item[0].draw()
-
-
         self.controlDot.draw()

@@ -58,6 +58,7 @@ class Window(QMainWindow):
             self.width() // 2,
             self.height() // 2,
         )
+        self.interface.isPressed = True
     
     def wheelEvent(self, wheel: QWheelEvent) -> None:
         self.interface.wheelEvent(wheel)

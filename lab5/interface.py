@@ -10,6 +10,7 @@ from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QMouseEvent, QKeyEvent
 import numpy as np
 from axis import Axis
+from sphere import Sphere
 from polyfigure import PolyFigure
 
 from point import Point
@@ -50,6 +51,9 @@ class Interface(QWidget):
 
     pyramid: PolyFigure
     cube: PolyFigure
+    sphere: Sphere
+
+    line: List[Line]
 
     def __init__(self) -> None:
         super().__init__()
@@ -72,7 +76,8 @@ class Interface(QWidget):
                      73: False, 75: False, 79: False, 76: False, 80: False, 59: False}
         self.isWheelMoved = False
 
-        
+        self.lines = []
+        self.isPressed = False
 
         self.initFigures()
 
@@ -150,6 +155,10 @@ class Interface(QWidget):
         
         cubePoint = Point(self, self.axis.matrix, 1.25, 0.75, -0.25)
         self.cube = PolyFigure(self, self.axis.matrix, cubePoint, cubeList, penFill, penBorder, self.light, True)
+
+        centerPoint = Point(self, self.axis.matrix, 0.75, 1.25, 0.25)
+        spherePoint = Point(self, self.axis.matrix, 0.75, 1.25,-0.25)
+        self.sphere = Sphere(self, self.axis.matrix, spherePoint, centerPoint, 0.25, penFill, penBorder, self.light)
 
     def paintEvent(self, event) -> None:
         '''
@@ -256,14 +265,30 @@ class Interface(QWidget):
         '''
         Рисование всего на экран
         '''
+        # self.lines = []
         self.clearScreen()
         self.axis.draw()
         self.drawRects()
+        for l in self.lines:
+            l.draw()
         self.pyramid.draw()
         self.cube.draw()
+        sphereUpdate = False
+        if ((self.selected_point == self.sphere.controlDot
+             or self.selected_point == self.light) and not self.lockRects
+             or self.isPressed):
+             sphereUpdate = True
+             self.isPressed = False
+        self.sphere.draw(sphereUpdate)
         self.light.draw()
         # self.winLines.draw()
-        
+
+    def checkPress(self):
+        for button in self.keys:
+            if button:
+                return True
+        return False
+
     def checkPointIntersectionEvent(self, pos: QPoint) -> Point:
         '''
         Поиск точки, на которую было произведено нажатие
@@ -394,6 +419,7 @@ class Interface(QWidget):
             self.selectPoint(None)
             self.initRects()
 
+        self.isPressed = True
         self.keys[key.key()] = True
         self.update()
 
@@ -405,6 +431,7 @@ class Interface(QWidget):
             self.cursorOnX = False
             self.cursorOnY = False
             self.cursorOnZ = False
+            self.lines = []
             if (not self.checkPointIntersectionEvent(pos)):
                 posList = [pos.x(), pos.y()]
                 recX_z = inf

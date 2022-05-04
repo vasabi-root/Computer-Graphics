@@ -9,7 +9,7 @@ from PyQt5.QtGui import QColor, QPixmap, QImage, qRgba
 from PyQt5.QtCore import Qt, QRectF, QPointF, QPoint
 import numpy as np
 
-from shared import Config, Colors, normalize, RotationMatrices
+from shared import Config, Colors, Light, normalize, RotationMatrices
 from point import Point
 from line import Line
 from axis import Axis
@@ -95,7 +95,7 @@ class Polygon:
         # self.image = QImage(self.widget.width(), self.widget.height(), QImage.Format.Format_RGBA64)
         # self.image.fill(Colors.TRANSPARENT)
         P = self.lines[0].coords[0]
-        i = self.computeLightForDot(P, N)
+        i = Light.computeLightForDot(self.light,P, N)
         c = QColor(int(color.red()*i), int(color.green()*i), int(color.blue()*i), color.alpha())
         pen = QPen(c, 1, Qt.SolidLine)
         self.fill(pen)
@@ -175,7 +175,6 @@ class Polygon:
         if 0 <= x < self.widget.width() and 0 <= y < self.widget.height():
             p = QPointF(x, y)
             self.image.setPixel(p.toPoint(), c)
-            color = self.image.pixelColor(p.toPoint())
 
     def draw(self, transparent: int = 80) -> None:
         if self.isLight:
