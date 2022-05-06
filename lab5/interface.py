@@ -274,12 +274,15 @@ class Interface(QWidget):
         self.pyramid.draw()
         self.cube.draw()
         sphereUpdate = False
-        if ((self.selected_point == self.sphere.controlDot
-             or self.selected_point == self.light) and not self.lockRects
-             or self.isPressed):
-             sphereUpdate = True
-             self.isPressed = False
-        self.sphere.draw(sphereUpdate)
+        # if ((self.selected_point == self.sphere.controlDot
+        #      or self.selected_point == self.light) and not self.lockRects
+        #      or self.isPressed):
+        #      sphereUpdate = True
+        #      self.isPressed = False
+        # self.sphere.draw(sphereUpdate)
+        # print(self.cube.polyList[0].get_screen_lines()[0][0])
+        # print(self.pyramid.polyList[0].get_screen_lines()[0][0])
+        # print()
         self.light.draw()
         # self.winLines.draw()
 

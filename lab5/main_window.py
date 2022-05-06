@@ -15,7 +15,7 @@ class Window(QMainWindow):
     
     def __init__(self) -> None:
         super().__init__()
-        self.title = "VECTOR-SQUAD LAB-4.3"
+        self.title = "VECTOR-SQUAD LAB-5.5"
         
         self.interface = Interface()
         self.initWindow()

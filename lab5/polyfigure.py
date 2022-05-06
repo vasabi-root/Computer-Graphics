@@ -42,13 +42,11 @@ class PolyFigure(Figure):
             for l in poly.lines:
                 z = np.dot(self.matrix, l.coords[0])[2]
                 i = 0 
-                for dot in polyVerts: # сортировка вершин полигона по убыванию Z
-                    if (z > dot):
+                for dot in polyVerts: # сортировка вершин полигона по возрастанию Z
+                    if (z < dot):
                         break
                     i += 1
                 polyVerts.insert(i, z)
-            # for p in polyVerts:
-            #     print(p)
             i = 0
             flag = True
             while (i < len(zBuff) and flag):

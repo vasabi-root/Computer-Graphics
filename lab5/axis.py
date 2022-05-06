@@ -55,8 +55,10 @@ class Axis:
         #                 [0, 0, 0.5/Config.AXIS_LINE_LENGTH, 1] ]
         self.setCenterCoords(center_x, center_y)
         self.setScale(axis_line_length)
-        self.rotate_x(120.0, is_init=True)
-        self.rotate_z(230.0, is_init=True)
+        # self.rotate_x(120.0, is_init=True)
+        # self.rotate_z(230.0, is_init=True)
+        self.rotate_z(90.0, is_init=True)
+        self.rotate_x(180.0, is_init=True)
         self.rotate_x(self.x_angle, is_init=True)
         self.rotate_y(self.y_angle, is_init=True)
         self.rotate_z(self.z_angle, is_init=True)

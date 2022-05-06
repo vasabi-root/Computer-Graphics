@@ -79,11 +79,11 @@ class Sphere(Figure):
                 
 
     def setPix(self, x: float, y: float, c: int, start, end):
-        if 0 <= x+1 < self.widget.width()-1 and 0 <= y+1 < self.widget.height()-1:
             # for i in [0, 1]
-            points = []
-            for i in range(start, end):
-                for j in range(start, end):
+        points = []
+        for i in range(start, end):
+            for j in range(start, end):
+                if 0 <= x+i < self.widget.width()-1 and 0 <= y+j < self.widget.height()-1:
                     self.image.setPixel(QPointF(x+i, y+j).toPoint(), c)
             # p1 = QPointF(x, y)
             # p2 = QPointF(x+1, y)

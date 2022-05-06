@@ -106,7 +106,7 @@ class Point:
         '''
         self.is_light = is_light
         if is_light:
-            self.intensity = 0.5
+            self.intensity = 0.6
         
     def setIsSelected(self, is_selected: bool) -> None:
         '''

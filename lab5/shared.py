@@ -132,7 +132,7 @@ class Light:
     '''
     @staticmethod
     def computeLightForDot(light, P: np.array, N: np.array) -> float: 
-        i = 0.5
+        i = 1 - light.intensity
         l = light.coords - P
         L = np.array([l[0], l[1], l[2]])
         N_dot_L = L.dot(N)

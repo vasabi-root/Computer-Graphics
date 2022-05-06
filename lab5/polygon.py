@@ -97,7 +97,7 @@ class Polygon:
         P = self.lines[0].coords[0]
         i = Light.computeLightForDot(self.light,P, N)
         c = QColor(int(color.red()*i), int(color.green()*i), int(color.blue()*i), color.alpha())
-        pen = QPen(c, 1, Qt.SolidLine)
+        pen = QPen(c, 2, Qt.SolidLine)
         self.fill(pen)
         
 
