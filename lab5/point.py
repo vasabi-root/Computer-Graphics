@@ -68,7 +68,7 @@ class Point:
         if check:
             [x, y, z] = Config.checkLimits(x, y, z)
             
-        self.coords = np.array([ x, y, z, w ], dtype=np.float64)
+        self.coords = np.array([ x, y, z, w ], dtype=np.float32)
 
 
     @singledispatch
@@ -106,7 +106,7 @@ class Point:
         '''
         self.is_light = is_light
         if is_light:
-            self.intensity = 0.6
+            self.intensity = np.float32(0.6)
         
     def setIsSelected(self, is_selected: bool) -> None:
         '''
