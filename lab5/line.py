@@ -1,9 +1,8 @@
-from distutils.command.config import config
-from netrc import NetrcParseError
 from typing import List
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPainter, QPen, QColor
 from PyQt5.QtCore import QPointF
+from point import Point
 from shared import Config, Colors
 
 import math
@@ -21,17 +20,17 @@ class Line:
     YELLOW_COLOR = QColor("#FFD800")    # Цвета
     BLUE_COLOR =   QColor("#0057B8")
 
-    coords: np.array    # координаты концов линии относительно осей
-    screen: np.array    # координаты концов линии относительно экрана
-
-    matrix: np.array    # матрица перехода
+    p1: Point
+    p2: Point
 
     diffCoords: List
     
-    def __init__(self, widget: QWidget, matrix: np.array, p1: List, p2: List, pen: QPen = None, is_anime = False) -> None:
+    def __init__(self, widget: QWidget, p1: Point, p2: Point, pen: QPen = None, is_anime = False) -> None:
         self.setWidget(widget)
-        self.matrix = matrix
-        self.setCoords(p1, p2)
+        self.p1 = p1
+        self.p2 = p2
+        # self.setCoords(p1, p2)
+        self.setDiff()
         self.setPen(pen)
         self.setAnime(is_anime)
     
@@ -48,21 +47,19 @@ class Line:
         '''
         Установка координат
         '''
-        if (check):
-            p1 = Config.checkLimits(p1[0], p1[1], p1[2])
-            p2 = Config.checkLimits(p2[0], p2[1], p2[2])
+        # if (check):
+        #     p1 = Config.checkLimits(p1[0], p1[1], p1[2])
+        #     p2 = Config.checkLimits(p2[0], p2[1], p2[2])
 
-        self.diffCoords = []
+        self.p1.setCoords(p1[0], p1[1], p1[2])
+        self.p2.setCoords(p2[0], p2[1], p2[2])
 
-        if (len(p1) != 4):
-            p1.append(1)
-        if (len(p2) != 4):
-            p2.append(1)
-        self.coords = [ np.array(p1), 
-                        np.array(p2) ]
-        self.diffCoords.append(p2[0]-p1[0])
-        self.diffCoords.append(p2[1]-p1[1])
-        self.diffCoords.append(p2[2]-p1[2])
+        self.setDiff()
+        
+
+    def setDiff(self) -> None:
+        self.diffCoords = self.p2.coords - self.p1.coords
+
     def initPainter(self) -> None:
         '''
         Инициализация рисовалки
@@ -72,17 +69,10 @@ class Line:
         self.painter.setRenderHints(QPainter.Antialiasing)
 
     def initScreen(self) -> None:
-        # m = [ [1, 0, 0, 0],
-        #       [0, 1, 0, 0],
-        #       [0, 0, 1, 0],
-        #       [0, 0, 0.5/Config.AXIS_LINE_LENGTH, 1] ]
-        # matrix = np.dot(m, self.matrix)
-        screen = [ np.dot(self.matrix, self.coords[0]),
-                   np.dot(self.matrix, self.coords[1]) ]
-        # screen = [ np.dot(m, screen[0]), 
-        #            np.dot(m, screen[1]) ]
-        self.screen = [np.divide(screen[0], screen[0][3]),
-                       np.divide(screen[1], screen[1][3])]
+        # self.screen = [ np.dot(self.matrix, self.coords[0]),
+        #            np.dot(self.matrix, self.coords[1]) ]
+        self.p1.initScreen()
+        self.p2.initScreen()
         
     def setWidget(self, widget: QWidget) -> None:
         '''
@@ -94,23 +84,29 @@ class Line:
     #     return math.sqrt((self.x2-self.x1)**2 + (self.y2-self.y1)**2)
 
     def move(self, dx: float, dy: float, dz: float, check: bool = True) -> None:
-        self.setCoords([self.coords[0][0] + dx, self.coords[0][1] + dy, self.coords[0][2] + dz, self.coords[0][3]],
-                       [self.coords[1][0] + dx, self.coords[1][1] + dy, self.coords[1][2] + dz, self.coords[1][3]])
+        self.setPos(self.p1.x()+dx, self.p1.y()+dy, self.p1.z()+dz)
     
     def setPos(self, x: float, y: float, z: float, w: float = 1,  check: bool = True) -> None:
-        [x1, y1, z1] = Config.checkLimits(x, y, z)
-        [x2, y2, z2] = Config.checkLimits(x + self.diffCoords[0], y + self.diffCoords[1], z + self.diffCoords[2])
-        self.coords[0] = np.array([x1, y1, z1, w])
-        self.coords[1] = np.array([x2, y2, z2, w])
+        [x1, y1, z1] = [x, y, z]
+        [x2, y2, z2] = [x + self.diffCoords[0], y + self.diffCoords[1], z + self.diffCoords[2]]
+
+        # self.p1.setCoords(x, y, z, w, check)
+        # self.p2.setCoords(x + self.diffCoords[0], y + self.diffCoords[1], z + self.diffCoords[2], w, check)
+        self.p1.setCoords(x1, y1, z1, check)
+        self.p2.setCoords(x2, y2, z2, check)
     
-    def draw(self) -> None:
+    def draw(self, updateScreen: bool=False) -> None:
         '''
         Рисование линии
         '''
         self.initPainter()
-        self.initScreen()
+        if updateScreen:
+            self.p1.initScreen()
+            self.p2.initScreen()
+        # self.initScreen()
         # self.painter.draw
-        self.painter.drawLine(QPointF(self.screen[0][0], self.screen[0][1]), QPointF(self.screen[1][0], self.screen[1][1]))
+        # self.painter.drawLine(QPointF(self.screen[0][0], self.screen[0][1]), QPointF(self.screen[1][0], self.screen[1][1]))
+        self.painter.drawLine(QPointF(self.p1.screen[0], self.p1.screen[1]), QPointF(self.p2.screen[0], self.p2.screen[1]))
         self.painter.end()
     
     

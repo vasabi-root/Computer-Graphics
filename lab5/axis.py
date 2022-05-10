@@ -16,11 +16,11 @@ class Axis:
     '''
     matrix: np.ndarray      # матрица осей (для математики)
 
-    center: np.array           # центральная точка
+    center: Point           # центральная точка
 
-    ox: np.array               # крайняя точка оси OX
-    oy: np.array               # крайняя точка оси OY
-    oz: np.array               # крайняя точка оси OZ
+    ox: Point               # крайняя точка оси OX
+    oy: Point               # крайняя точка оси OY
+    oz: Point               # крайняя точка оси OZ
 
     lines: List[Line]          # линии, образующие оси
 
@@ -55,10 +55,10 @@ class Axis:
         #                 [0, 0, 0.5/Config.AXIS_LINE_LENGTH, 1] ]
         self.setCenterCoords(center_x, center_y)
         self.setScale(axis_line_length)
-        # self.rotate_x(120.0, is_init=True)
-        # self.rotate_z(230.0, is_init=True)
-        self.rotate_z(90.0, is_init=True)
-        self.rotate_x(180.0, is_init=True)
+        self.rotate_x(120.0, is_init=True)
+        self.rotate_z(230.0, is_init=True)
+        # self.rotate_z(90.0, is_init=True)
+        # self.rotate_x(180.0, is_init=True)
         self.rotate_x(self.x_angle, is_init=True)
         self.rotate_y(self.y_angle, is_init=True)
         self.rotate_z(self.z_angle, is_init=True)
@@ -94,10 +94,11 @@ class Axis:
         '''
         Инициализация координат осей
         '''
-        self.center = np.array([0, 0, 0, 1])
-        self.ox = np.array([1, 0, 0, 1])
-        self.oy = np.array([0, 1, 0, 1])
-        self.oz = np.array([0, 0, 1, 1])
+        self.center = Point(self.widget, self.matrix,0, 0, 0, 1)
+        self.ox = Point(self.widget, self.matrix, 1, 0, 0, 1)
+        self.oy = Point(self.widget, self.matrix, 0, 1, 0, 1)
+        self.oz = Point(self.widget, self.matrix, 0, 0, 1, 1)
+        print(self.center.coords)
 
     def initPen(self) -> None:
         self.pen = QPen(Colors.BLACK_COLOR, 1, Qt.SolidLine)
@@ -135,9 +136,9 @@ class Axis:
         '''
         # axis_points = self.setAxisPoints()
         # center = axis_points[0]
-        self.lines = [ Line(self.widget, self.matrix, self.center, self.ox, self.pen), 
-                       Line(self.widget, self.matrix, self.center, self.oy, self.pen), 
-                       Line(self.widget, self.matrix, self.center, self.oz, self.pen) ]
+        self.lines = [ Line(self.widget, self.center, self.ox, self.pen), 
+                       Line(self.widget, self.center, self.oy, self.pen), 
+                       Line(self.widget, self.center, self.oz, self.pen) ]
         # return [
         #     Line(self.widget, center[0], center[1], axis_points[i], axis_points[i].y(), self.pen)
         #     for i in range(1, len(axis_points))
@@ -148,11 +149,15 @@ class Axis:
         Рисование осей
         '''
 
+        self.center.initScreen()
+        self.ox.initScreen()
+        self.oy.initScreen()
+        self.oz.initScreen()
         for i, line in enumerate(self.lines):
-            line.draw()
+            line.draw(updateScreen=False)
             qp = QPainter(self.widget)
             qp.setPen(self.pen)
-            qp.drawText(int(line.screen[1][0]), int(line.screen[1][1]), chr(ord('X') + i))
+            qp.drawText(int(line.p2.screen[0]), int(line.p2.screen[1]), chr(ord('X') + i))
             qp.end()
 
     def rotate_x(self, alpha: float, is_init: bool = False) -> None:

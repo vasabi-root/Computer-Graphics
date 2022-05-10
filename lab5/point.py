@@ -24,6 +24,7 @@ class Point:
     matrix: np.array     # матрица перехода из осевых в экранные координаты
 
     instances = []
+    polygons: List       # список полигонов, ссылающихся на эту точку
     
     def __init__(self, 
             widget: QWidget,
@@ -35,15 +36,20 @@ class Point:
             check: bool = False,
 
             is_selected: bool = False, 
-            is_light: bool = False) -> None:   
-
-        self.__class__.instances.append(self)
-
+            is_light: bool = False,
+            is_help: bool = True) -> None:   
+        
+        if (not is_help):
+            self.__class__.instances.append(self)
+        
+        self.is_drawed = False
         self.setWidget(widget)
         self.matrix = matrix
         self.setCoords(x, y, z, w, check)
         self.setIsSelected(is_selected)
         self.setIsLight(is_light)
+        self.polygons = []
+        
 
     def __str__(self) -> str:
         return f'Point ({self.x()}, {self.y()}, {self.z()}, {self.w()})'
@@ -59,17 +65,20 @@ class Point:
 
     def w(self) -> float:
         return self.coords[3]
+
+    def addPolygon(self, poly) -> None:
+        self.polygons.append(poly)
     
     @singledispatch
-    def setCoords(self, x: float, y: float, z: float, w: float, check: bool = True) -> None:
+    def setCoords(self, x: float, y: float, z: float, w: float=1, check: bool = True) -> None:
         '''
         Установка координат в трехмерном пространстве
         '''
+        self.incorrect = [x, y, z]
         if check:
             [x, y, z] = Config.checkLimits(x, y, z)
             
         self.coords = np.array([ x, y, z, w ], dtype=np.float32)
-
 
     @singledispatch
     def move(self, dx, dy, dz, w=1, check = True) -> None:
@@ -120,9 +129,9 @@ class Point:
         #       [0, 0, 1, 0],
         #       [0, 0, 0.5/Config.AXIS_LINE_LENGTH, 1] ]
         # matrix = np.dot(m, self.matrix)
-        screen = np.dot(self.matrix, self.coords)
+        self.screen = np.dot(self.matrix, self.coords)
         # screen = np.dot(m, screen)
-        self.screen = np.divide(screen, screen[3])
+        # self.screen = np.divide(screen, screen[3])
 
     
     def draw(self) -> None:
@@ -145,4 +154,3 @@ class Point:
         y = self.screen[1] - abs(Point.SELECT_RADIUS - Point.HEIGHT) // 2
         return x <= pos.x() <= x + Point.SELECT_RADIUS and \
                 y <= pos.y() <= y + Point.SELECT_RADIUS
-

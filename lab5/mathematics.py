@@ -168,9 +168,12 @@ def line_poly_cross(line: List, poly: List) -> List:
     num = -(A*x1 + B*y1 + C*z1 + D)
     den = A*Px + B*Py + C*Pz
 
-    t = num / den
+    if (den != 0):
+        t = num / den
+    else:
+        return None
 
-    return get_coords_param_line(line, t)
+    return [get_coords_param_line(line, t), t]
 
 def param_cross(a: List, b: List) -> List:
     '''
@@ -203,6 +206,10 @@ def param_cross(a: List, b: List) -> List:
 
 
 
+        
+# a = [[1,5],[3,6],[5,6],[3,4],[2,4],[1,3],[5,4],[5,2],[3,2],[1,1],[3,1]]
+# p = Jarvis(a,11)
+# print(p)
 
 
 

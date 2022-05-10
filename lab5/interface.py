@@ -1,4 +1,3 @@
-from audioop import reverse
 from cmath import inf
 from distutils import bcppcompiler
 from email.charset import QP
@@ -61,7 +60,7 @@ class Interface(QWidget):
         self.qp = QPainter()                # Просто специальная рисовалка
         self.axis: Axis = Axis(self)
         # self.winLines : WindowLines = WindowLines(self, self.axis)
-        self.light = Point(self, self.axis.matrix, 2, 2, 2, is_light=True)
+        self.light = Point(self, self.axis.matrix, 2, 2, 2, is_light=True, is_help=False)
         self.initRects()
 
         self.selected_point: Point = None
@@ -88,25 +87,25 @@ class Interface(QWidget):
         penLines = QPen(Colors.RED_COLOR, 2)
         penFill = QPen(QColor(penLines.color().red(), penLines.color().green(), penLines.color().blue(), 80), 1)
 
-        pX = [ [0, 0, 0],
-               [0, 1, 0],
-               [0, 1, 1],
-               [0, 0, 1] ]
-        self.rectangleX = Polygon(self, self.axis.matrix, pX, penFill, penLines, self.light)
+        pX = [ Point(self, self.axis.matrix, 0, 0, 0),
+               Point(self, self.axis.matrix, 0, 1, 0),
+               Point(self, self.axis.matrix, 0, 1, 1),
+               Point(self, self.axis.matrix, 0, 0, 1) ]
+        self.rectangleX = Polygon(self, pX, penFill, penLines, self.light)
         self.cursorOnX = False
 
-        pY = [ [0, 0, 0],
-               [0, 0, 1],
-               [1, 0, 1],
-               [1, 0, 0] ]
-        self.rectangleY = Polygon(self, self.axis.matrix, pY, penFill, penLines, self.light)
+        pY = [ Point(self, self.axis.matrix, 0, 0, 0),
+               Point(self, self.axis.matrix, 0, 0, 1),
+               Point(self, self.axis.matrix, 1, 0, 1),
+               Point(self, self.axis.matrix, 1, 0, 0) ]
+        self.rectangleY = Polygon(self, pY, penFill, penLines, self.light)
         self.cursorOnY = False
 
-        pZ = [ [0, 0, 0],
-               [1, 0, 0],
-               [1, 1, 0],
-               [0, 1, 0] ]
-        self.rectangleZ = Polygon(self, self.axis.matrix, pZ, penFill, penLines, self.light)
+        pZ = [ Point(self, self.axis.matrix, 0, 0, 0),
+               Point(self, self.axis.matrix, 1, 0, 0),
+               Point(self, self.axis.matrix, 1, 1, 0),
+               Point(self, self.axis.matrix, 0, 1, 0) ]
+        self.rectangleZ = Polygon(self, pZ, penFill, penLines, self.light)
         self.cursorOnZ = False
 
         self.lockRects = True
@@ -119,30 +118,30 @@ class Interface(QWidget):
         '''
         penFill = QPen(Colors.BLUE_COLOR, 1, Qt.SolidLine)
         penBorder = QPen(Colors.YELLOW_COLOR, 1, Qt.SolidLine)
-        A = [0.75, 0.5, 0]
-        B = [0.25, 0.25, 0]
-        C = [0.25, 0.75, 0]
-        D = [0.42, 0.5, 0.5]
+        A = Point(self, self.axis.matrix, 0.75, 0.5, 0)
+        B = Point(self, self.axis.matrix, 0.25, 0.25, 0)
+        C = Point(self, self.axis.matrix, 0.25, 0.75, 0)
+        D = Point(self, self.axis.matrix, 0.42, 0.5, 0.5)
 
         pyramidList = [ 
-            [A, B, C], 
-            [A, D, B],
-            [C, D, A],
-            [B, D, C]
+            [ A, B, C ], 
+            [ A, D, B ],
+            [ C, D, A ],
+            [ B, D, C ]
         ]
 
-        pyramidPoint = Point(self, self.axis.matrix, 0.42, 0.5, -0.25)
+        pyramidPoint = Point(self, self.axis.matrix, 0.42, 0.5, -0.25, is_help=False)
         self.pyramid = PolyFigure(self, self.axis.matrix, pyramidPoint, pyramidList, penFill, penBorder, self.light, True)
 
-        A1 = [1.5, 1, 0]
-        B1 = [1.5, 0.5, 0]
-        C1 = [1, 0.5, 0]
-        D1 = [1, 1, 0]
+        A1 = Point(self, self.axis.matrix, 1.5, 1, 0)
+        B1 = Point(self, self.axis.matrix, 1.5, 0.5, 0)
+        C1 = Point(self, self.axis.matrix, 1, 0.5, 0)
+        D1 = Point(self, self.axis.matrix, 1, 1, 0)
 
-        A2 = [1.5, 1, 0.5]
-        B2 = [1.5, 0.5, 0.5]
-        C2 = [1, 0.5, 0.5]
-        D2 = [1, 1, 0.5]
+        A2 = Point(self, self.axis.matrix, 1.5, 1, 0.5)
+        B2 = Point(self, self.axis.matrix, 1.5, 0.5, 0.5)
+        C2 = Point(self, self.axis.matrix, 1, 0.5, 0.5)
+        D2 = Point(self, self.axis.matrix, 1, 1, 0.5)
 
         cubeList = [
             [ A1, B1, C1, D1 ],
@@ -153,11 +152,11 @@ class Interface(QWidget):
             [ D2, C2, B2, A2 ]
         ]
         
-        cubePoint = Point(self, self.axis.matrix, 1.25, 0.75, -0.25)
+        cubePoint = Point(self, self.axis.matrix, 1.25, 0.75, -0.25, is_help=False)
         self.cube = PolyFigure(self, self.axis.matrix, cubePoint, cubeList, penFill, penBorder, self.light, True)
 
         centerPoint = Point(self, self.axis.matrix, 0.75, 1.25, 0.25)
-        spherePoint = Point(self, self.axis.matrix, 0.75, 1.25,-0.25)
+        spherePoint = Point(self, self.axis.matrix, 0.75, 1.25,-0.25, is_help=False)
         self.sphere = Sphere(self, self.axis.matrix, spherePoint, centerPoint, 0.25, penFill, penBorder, self.light)
 
     def paintEvent(self, event) -> None:
@@ -186,60 +185,58 @@ class Interface(QWidget):
         qArray = []
         if (self.cursorOnX):
             self.rectangleX.draw()
-            qArray.append(self.rectangleX.lines[1].coords[0])
-            qArray.append(self.rectangleX.lines[3].coords[0])
+            qArray.append(self.rectangleX.points[1])
+            qArray.append(self.rectangleX.points[3])
             qArray.append(self.axis.ox)
             self.drawHelper(self.rectangleX, qArray, 0)
                 
         if (self.cursorOnY):
             self.rectangleY.draw()
-            qArray.append(self.rectangleY.lines[1].coords[0])
-            qArray.append(self.rectangleY.lines[3].coords[0])
+            qArray.append(self.rectangleY.points[1])
+            qArray.append(self.rectangleY.points[3])
             qArray.append(self.axis.oy)
             self.drawHelper(self.rectangleY, qArray, 1)
         if (self.cursorOnZ):
             self.rectangleZ.draw()
-            qArray.append(self.rectangleZ.lines[1].coords[0])
-            qArray.append(self.rectangleZ.lines[3].coords[0])
+            qArray.append(self.rectangleZ.points[1])
+            qArray.append(self.rectangleZ.points[3])
             qArray.append(self.axis.oz)
             self.drawHelper(self.rectangleZ, qArray, 2)
 
     def drawHelper(self, rect: Polygon, qArray: List, mode: int) -> None:
         sel = self.selected_point
-        p = rect.lines[0].coords[0]
+        p = rect.points[0]
         q = qArray[2]
-        f = np.array([0, 0, 0, 1])
-        self.drawHelpLines(p, q, f, mode)
+        self.drawHelpLines(p, q, self.axis.center, mode)
         if (sel != None):
             lines = []
-            pointsAxis = []
-            pointsAxis.append([ sel.x() if mode != 0 else rect.lines[0].coords[0][0],
-                                sel.y() if mode != 1 else rect.lines[0].coords[0][1],
-                                sel.z() if mode != 2 else rect.lines[0].coords[0][2],
-                                sel.w() ])
+            recX = rect.points[0].coords[0]
+            recY = rect.points[0].coords[1]
+            recZ = rect.points[0].coords[2]
 
-            pointsAxis.append([ rect.lines[0].coords[0][0] if mode in [0, 1] else sel.x(),
-                                rect.lines[0].coords[0][1] if mode in [1, 2] else sel.y(),
-                                rect.lines[0].coords[0][2] if mode in [0, 2] else sel.z(),
-                                sel.w() ])
+            A = Point(self, self.axis.matrix, sel.x() if mode != 0 else recX,
+                                              sel.y() if mode != 1 else recY,
+                                              sel.z() if mode != 2 else recZ,
+                                              sel.w() )
 
-            pointsAxis.append([ rect.lines[0].coords[0][0] if mode in [0, 2] else sel.x(),
-                                rect.lines[0].coords[0][1] if mode in [0, 1] else sel.y(),
-                                rect.lines[0].coords[0][2] if mode in [1, 2] else sel.z(),
-                                sel.w() ])
+            B = Point(self, self.axis.matrix, recX if mode in [0, 1] else sel.x(),
+                                              recY if mode in [1, 2] else sel.y(),
+                                              recZ if mode in [0, 2] else sel.z(),
+                                              sel.w())
 
-            A = sel.coords
-            B = pointsAxis[0]
-            C = pointsAxis[1]
-            D = pointsAxis[2]
+            C = Point(self, self.axis.matrix, recX if mode in [0, 2] else sel.x(),
+                                              recY if mode in [0, 1] else sel.y(),
+                                              recZ if mode in [1, 2] else sel.z(),
+                                              sel.w())
+            
 
-            lines.append(Line(self, self.axis.matrix, A, B, self.helpPen))
-            lines.append(Line(self, self.axis.matrix, B, C, self.helpPen))
-            lines.append(Line(self, self.axis.matrix, B, D, self.helpPen))
+            lines.append(Line(self, sel, A, self.helpPen))
+            lines.append(Line(self, A, B, self.helpPen))
+            lines.append(Line(self, A, C, self.helpPen))
             for l in lines:
-                l.draw()
+                l.draw(updateScreen=True)
 
-            for p in [pointsAxis[1], pointsAxis[2]]:
+            for p in [B, C]:
                 for i in range (2):
                     trueMode = 0
                     if (mode == 0 and i == 0) or (mode == 2 and i == 1):
@@ -248,17 +245,17 @@ class Interface(QWidget):
                         trueMode = 2
                     q = qArray[i]
 
-                    self.drawHelpLines(p, q, rect.lines[0].coords[0], trueMode)
+                    self.drawHelpLines(p, q, rect.points[0], trueMode)
 
-    def drawHelpLines(self, p: List, q: List, f: List, mode: int) -> None:
+    def drawHelpLines(self, p: Point, q: Point, f: Point, mode: int) -> None:
         '''
         Рисование вспомогательных линий (для ощущения объёма)
         '''
-        if (p[mode] > q[mode]):
-            line = Line(self, self.axis.matrix, q, p, self.helpPen)
+        if (p.coords[mode] > q.coords[mode]):
+            line = Line(self, q, p, self.helpPen)
             line.draw()
-        elif (p[mode] < f[mode]):
-            line = Line(self, self.axis.matrix, f, p, self.helpPen)
+        elif (p.coords[mode] < f.coords[mode]):
+            line = Line(self, f, p, self.helpPen)
             line.draw()
     
     def draw(self) -> None:
@@ -272,17 +269,15 @@ class Interface(QWidget):
         for l in self.lines:
             l.draw()
         self.pyramid.draw()
-        self.cube.draw()
+        # self.cube.draw()
         sphereUpdate = False
         if ((self.selected_point == self.sphere.controlDot
              or self.selected_point == self.light) and not self.lockRects
              or self.isPressed):
              sphereUpdate = True
              self.isPressed = False
-        self.sphere.draw(sphereUpdate)
-        # print(self.cube.polyList[0].get_screen_lines()[0][0])
-        # print(self.pyramid.polyList[0].get_screen_lines()[0][0])
-        # print()
+        # self.sphere.draw(sphereUpdate)
+
         self.light.draw()
         # self.winLines.draw()
 
@@ -313,7 +308,7 @@ class Interface(QWidget):
         line = mat.parametr_line(A, B)
 
         cross = mat.line_poly_cross(line, poly)
-        posCross = [cross[0], cross[1], cross[2], 1]
+        posCross = [cross[0][0], cross[0][1], cross[0][2], 1]
         posArray = np.array(posCross)
 
         return np.dot(reverse, posArray)
