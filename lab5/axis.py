@@ -98,7 +98,6 @@ class Axis:
         self.ox = Point(self.widget, self.matrix, 1, 0, 0, 1)
         self.oy = Point(self.widget, self.matrix, 0, 1, 0, 1)
         self.oz = Point(self.widget, self.matrix, 0, 0, 1, 1)
-        print(self.center.coords)
 
     def initPen(self) -> None:
         self.pen = QPen(Colors.BLACK_COLOR, 1, Qt.SolidLine)

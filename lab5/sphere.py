@@ -32,7 +32,7 @@ class Sphere(Figure):
         self.radius = np.float32(radius*Config.AXIS_LINE_LENGTH)
         self.diff = center.coords - controlDot.coords
         self.image = None
-        # self.initVGA()
+        self.initVGA()
         # print(self.diff)
 
     def initVGA(self) -> None:

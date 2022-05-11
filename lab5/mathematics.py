@@ -3,9 +3,6 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
 import numpy as np
 
-from point import Point
-from line import Line
-
 def mk_OP(a):      # построение ограничительного прямоугольника
     x1 = min(a[0][0],a[1][0])
     x2 = max(a[0][0],a[1][0])

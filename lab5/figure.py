@@ -28,7 +28,7 @@ class Figure:
     diffCoords: List        # расстояния от контрольной точки до вершин фигуры (для перемещения фигуры)
 
     def __init__(self, widget: QWidget, matrix: np.array, controlDot: Point, penFill: QPen, penBorder: QPen, light: Point, isLight: bool = False) -> None:
-        self.__class__.instances.append(self) # учёт всех объектов
+        # self.__class__.instances.append(obj) # учёт всех объектов
 
         self.widget = widget
         self.matrix = matrix

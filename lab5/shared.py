@@ -4,6 +4,7 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
 import enum
 import numpy as np
+import mathematics as mat
 
 
 def normalize(v: np.ndarray) -> np.ndarray:
@@ -141,3 +142,24 @@ class Light:
             # print(N_dot_L, self.light.intensity)
             i += light.intensity*N_dot_L / (np.sqrt((N*N).sum())* np.sqrt((L*L).sum()))
         return i
+
+    @staticmethod
+    def iteration(xList, yList, painter, borderSize, polygons):
+        for y in yList:
+            for x in xList:
+                A = [x, y, 0]
+                B = [x, y, 3]
+                zBuff = []
+                for poly in polygons:
+                    if (mat.dot_in_poly([x, y], poly.get_screen_lines()) == 1):
+                        points = poly.get_screen_points()
+                        polyEq = mat.eq_poly(points[0], points[1], points[2], points[0])
+                        line = mat.parametr_line(A, B)
+                        c = mat.line_poly_cross(line, polyEq)
+                        zBuff.append([poly.computedPen, c[0]])
+                if (len(zBuff) > 0):
+                    minZV = min(zBuff, key=lambda p:p[1][2])
+                    painter.setPen(minZV[0])
+                    for i in range (-borderSize, borderSize+1):
+                        for j in range (-borderSize, borderSize+1):
+                            painter.drawPoint(x+i, y+j)

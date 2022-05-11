@@ -1,10 +1,11 @@
 from functools import singledispatch
+import string
 from typing import List
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPainter, QBrush, QPen
 from PyQt5.QtGui import QMouseEvent
 from PyQt5.QtGui import QColor
-from PyQt5.QtCore import Qt, QRectF, QPoint
+from PyQt5.QtCore import Qt, QRectF, QPoint, QPointF
 import numpy as np
 
 from shared import Colors, Config
@@ -34,6 +35,8 @@ class Point:
             z: float, 
             w: float = 1.0, 
             check: bool = False,
+            pen: QPen = None,
+            name: string = 'point',
 
             is_selected: bool = False, 
             is_light: bool = False,
@@ -41,7 +44,7 @@ class Point:
         
         if (not is_help):
             self.__class__.instances.append(self)
-        
+        self.is_help = is_help
         self.is_drawed = False
         self.setWidget(widget)
         self.matrix = matrix
@@ -49,6 +52,8 @@ class Point:
         self.setIsSelected(is_selected)
         self.setIsLight(is_light)
         self.polygons = []
+        self.pen = pen
+        self.name = name
         
 
     def __str__(self) -> str:
@@ -95,7 +100,10 @@ class Point:
         Инициализация рисовалки
         '''
         self.painter = QPainter(self.widget) 
-        if self.is_selected:
+        if self.is_help and self.pen != None:
+            self.painter.setPen(self.pen)
+            # self.painter.setBrush(QBrush(Colors.RED_COLOR, Qt.SolidPattern))
+        elif self.is_selected:
             self.painter.setPen(QPen(Colors.RED_COLOR, 1, Qt.SolidLine))
             self.painter.setBrush(QBrush(Colors.RED_COLOR, Qt.SolidPattern))
         elif self.is_light:
@@ -133,15 +141,22 @@ class Point:
         # screen = np.dot(m, screen)
         # self.screen = np.divide(screen, screen[3])
 
+    def setPen(self, pen: QPen) -> None:
+        self.pen = pen
     
-    def draw(self) -> None:
+    def draw(self, pixSize=1) -> None:
         '''
         Рисование точки
         '''
         self.initPainter()
         self.initScreen()
-        r = Point.WIDTH / 2
-        self.painter.drawEllipse(QRectF(self.screen[0] - r, self.screen[1] - r, Point.WIDTH, Point.HEIGHT))
+        if (self.is_help):
+            for i in range(-pixSize, pixSize+1):
+                for j in range(-pixSize, pixSize+1):
+                    self.painter.drawPoint(QPointF(self.screen[0]+i, self.screen[1]+j).toPoint())
+        else:
+            r = Point.WIDTH / 2
+            self.painter.drawEllipse(QRectF(self.screen[0] - r, self.screen[1] - r, Point.WIDTH, Point.HEIGHT))
         self.painter.end()
         
     def checkIntersection(self, pos: QPoint) -> bool:
