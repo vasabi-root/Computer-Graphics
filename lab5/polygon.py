@@ -156,29 +156,29 @@ class Polygon:
         for l in self.lines:
             l_param.append(mat.parametr_line(l.p1.coords, l.p2.coords))
         if (polygon[0] == 0 and polygon[1] == 0):
-            y = minY
-            while(y <= maxY):
-                poly = mat.eq_poly([minX, y, minZ], [minX+1, y, minZ], [minX, y, minZ+1], [minX, y, minZ])
-                crosses = []
-                for l in l_param:
-                    c = mat.line_poly_cross(l, poly)
-                    if c != None and 0 <= c[1] <= 1: #or (len(crosses) != 0 and crosses.index(c) == ValueError):
-                        crosses.append(c)
-                if (len(crosses) >= 2):
-                    lineL = [crosses[0][0], crosses[1][0]]
-                    lenL = mat.get_len(lineL)
-                    line = mat.parametr_line(lineL[0], lineL[1])
-                    if (lenL == 0):
-                        stepT = 1
-                    else:
-                        stepT = stepPoint / lenL
-                    t = 0
-                    while (t <= 1):
-                        c = mat.get_coords_param_line(line, t)
-                        self.fillDots.append(Point(self.widget, self.matrix, c[0], c[1], c[2]))
-                        self.diffDots.append(self.fillDots[-1].coords - start.coords)
-                        t += stepT
-                y += stepPoint
+            # y = minY
+            # while(y <= maxY):
+            #     poly = mat.eq_poly([minX, y, minZ], [minX+1, y, minZ], [minX, y, minZ+1], [minX, y, minZ])
+            #     crosses = []
+            #     for l in l_param:
+            #         c = mat.line_poly_cross(l, poly)
+            #         if c != None and 0 <= c[1] <= 1: #or (len(crosses) != 0 and crosses.index(c) == ValueError):
+            #             crosses.append(c)
+            #     if (len(crosses) >= 2):
+            #         lineL = [crosses[0][0], crosses[1][0]]
+            #         lenL = mat.get_len(lineL)
+            #         line = mat.parametr_line(lineL[0], lineL[1])
+            #         if (lenL == 0):
+            #             stepT = 1
+            #         else:
+            #             stepT = stepPoint / lenL
+            #         t = 0
+            #         while (t <= 1):
+            #             c = mat.get_coords_param_line(line, t)
+            #             self.fillDots.append(Point(self.widget, self.matrix, c[0], c[1], c[2]))
+            #             self.diffDots.append(self.fillDots[-1].coords - start.coords)
+            #             t += stepT
+            #     y += stepPoint
             y = minY
             while (y <= maxY):
                 poly = mat.eq_poly([minX, y, minZ], [minX+1, y, minZ], [minX, y, minZ+1], [minX, y, minZ])
@@ -193,29 +193,29 @@ class Polygon:
                     self.diffFill.append(self.fillLines[-1].p1.coords - start.coords)
                 y += stepLine
         else:
-            z = minZ
-            while(z <= maxZ):
-                poly = mat.eq_poly([minX, minY, z], [minX+1, minY, z], [minX, minY+1, z ], [minX, minY, z ])
-                crosses = []
-                for l in l_param:
-                    c = mat.line_poly_cross(l, poly)
-                    if c != None and 0 <= c[1] <= 1: #or (len(crosses) != 0 and crosses.index(c) == ValueError):
-                        crosses.append(c)
-                if (len(crosses) >= 2):
-                    lineL = [crosses[0][0], crosses[1][0]]
-                    lenL = mat.get_len(lineL)
-                    line = mat.parametr_line(lineL[0], lineL[1])
-                    if (lenL == 0):
-                        stepT = 1
-                    else:
-                        stepT = stepPoint / lenL
-                    t = 0
-                    while (t <= 1):
-                        c = mat.get_coords_param_line(line, t)
-                        self.fillDots.append(Point(self.widget, self.matrix, c[0], c[1], c[2]))
-                        self.diffDots.append(self.fillDots[-1].coords - start.coords)
-                        t += stepT
-                z += stepPoint
+            # z = minZ
+            # while(z <= maxZ):
+            #     poly = mat.eq_poly([minX, minY, z], [minX+1, minY, z], [minX, minY+1, z ], [minX, minY, z ])
+            #     crosses = []
+            #     for l in l_param:
+            #         c = mat.line_poly_cross(l, poly)
+            #         if c != None and 0 <= c[1] <= 1: #or (len(crosses) != 0 and crosses.index(c) == ValueError):
+            #             crosses.append(c)
+            #     if (len(crosses) >= 2):
+            #         lineL = [crosses[0][0], crosses[1][0]]
+            #         lenL = mat.get_len(lineL)
+            #         line = mat.parametr_line(lineL[0], lineL[1])
+            #         if (lenL == 0):
+            #             stepT = 1
+            #         else:
+            #             stepT = stepPoint / lenL
+            #         t = 0
+            #         while (t <= 1):
+            #             c = mat.get_coords_param_line(line, t)
+            #             self.fillDots.append(Point(self.widget, self.matrix, c[0], c[1], c[2]))
+            #             self.diffDots.append(self.fillDots[-1].coords - start.coords)
+            #             t += stepT
+            #     z += stepPoint
 
             z = minZ
             while (z <= maxZ):
