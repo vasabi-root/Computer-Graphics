@@ -1,3 +1,4 @@
+from cmath import sqrt
 from typing import List
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
@@ -116,6 +117,12 @@ def get_coords_param_line(line: List, t: float) -> List: # координаты 
     if (len(line) >= 3):
         z = line[2][0]*t + line[2][1]
     return [x, y, z]
+
+def get_len(line: List) -> float:
+    l = [ line[1][0] - line[0][0],
+          line[1][1] - line[0][1],
+          line[1][2] - line[0][2] ]
+    return sqrt(l[0]**2 + l[1]**2 + l[2]**2).real
 
 def eq_poly(A: List, B: List, C: List, M: List) -> List: # Ax + By + Cz + D = 0
     '''

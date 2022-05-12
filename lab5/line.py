@@ -51,8 +51,8 @@ class Line:
         #     p1 = Config.checkLimits(p1[0], p1[1], p1[2])
         #     p2 = Config.checkLimits(p2[0], p2[1], p2[2])
 
-        self.p1.setCoords(p1[0], p1[1], p1[2])
-        self.p2.setCoords(p2[0], p2[1], p2[2])
+        self.p1.setCoords(p1[0], p1[1], p1[2], check)
+        self.p2.setCoords(p2[0], p2[1], p2[2], check)
 
         self.setDiff()
         
@@ -84,7 +84,7 @@ class Line:
     #     return math.sqrt((self.x2-self.x1)**2 + (self.y2-self.y1)**2)
 
     def move(self, dx: float, dy: float, dz: float, check: bool = True) -> None:
-        self.setPos(self.p1.x()+dx, self.p1.y()+dy, self.p1.z()+dz)
+        self.setPos(self.p1.x()+dx, self.p1.y()+dy, self.p1.z()+dz, check)
     
     def setPos(self, x: float, y: float, z: float, w: float = 1,  check: bool = True) -> None:
         [x1, y1, z1] = [x, y, z]

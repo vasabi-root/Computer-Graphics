@@ -57,7 +57,7 @@ class Axis:
         self.setScale(axis_line_length)
         self.rotate_x(120.0, is_init=True)
         self.rotate_z(230.0, is_init=True)
-        # self.rotate_z(90.0, is_init=True)
+        # self.rotate_z(180.0, is_init=True)
         # self.rotate_x(180.0, is_init=True)
         self.rotate_x(self.x_angle, is_init=True)
         self.rotate_y(self.y_angle, is_init=True)
@@ -100,7 +100,7 @@ class Axis:
         self.oz = Point(self.widget, self.matrix, 0, 0, 1, 1)
 
     def initPen(self) -> None:
-        self.pen = QPen(Colors.BLACK_COLOR, 1, Qt.SolidLine)
+        self.pen = QPen(Colors.BLACK, 1, Qt.SolidLine)
 
     def setAngles(self, x_angle: float, y_angle: float, z_angle: float) -> None:
         '''

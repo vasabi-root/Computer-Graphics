@@ -201,5 +201,6 @@ class Sphere(Figure):
 
     def setPos(self) -> None:
         self.center.coords = self.controlDot.coords + self.diff
+        # print(self.center.coords)
                 
     

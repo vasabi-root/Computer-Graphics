@@ -20,9 +20,10 @@ class PolyFigure(Figure):
     points: List[Point]     # список вершин
 
 
-    def __init__(self, widget: QWidget, matrix: np.array, controlDot: Point, polyPoints: List, penFill: QPen, penBorder: QPen, light: Point, isLight: bool = False) -> None:
+    def __init__(self, widget: QWidget, matrix: np.array, controlDot: Point, polyPoints: List, penFill: QPen, penBorder: QPen, light: Point, isLight: bool = False, isBorders=True) -> None:
         super().__init__(widget, matrix, controlDot, penFill, penBorder, light, isLight)
         Figure.instances.append(self) # учёт всех объектов
+        self.isBorders = isBorders
         self.setPolyList(polyPoints)
         
     def initPainter(self, pen: QPen) -> None:
@@ -38,25 +39,26 @@ class PolyFigure(Figure):
         self.points = []
         self.diffCoords = []
         for pointsList in polyPoints:
-            self.polyList.append(Polygon(self.widget, pointsList, self.penFill, self.penBorder, self.light, isLight=self.isLight))
+            self.polyList.append(Polygon(self.widget, pointsList, self.penFill, self.penBorder, self.light, isLines=self.isBorders, isLight=self.isLight))
             for p in pointsList:
                 try:
                     self.points.index(p)
                 except ValueError:
                     self.points.append(p)
                     self.diffCoords.append(p.coords - self.controlDot.coords)
-                
+
+    def setIsBorders(self, isBorders):
+        self.isBorders = isBorders
+        for poly in self.polyList:
+            poly.isLines = isBorders
 
     def setPos(self) -> None:
         for i, p in enumerate(self.points):
-            # poly.setPos(self.controlDot.x() + self.diffCoords[i][0], 
-            #             self.controlDot.y() + self.diffCoords[i][1], 
-            #             self.controlDot.z() + self.diffCoords[i][2])
             p.setCoords(self.controlDot.x() + self.diffCoords[i][0], 
                         self.controlDot.y() + self.diffCoords[i][1], 
-                        self.controlDot.z() + self.diffCoords[i][2])
+                        self.controlDot.z() + self.diffCoords[i][2], check=False)
         for poly in self.polyList:
-            poly.setFillPos()
+            poly.setFillPos(False)
     
     def getScreenPolyes(self) -> List[Polygon]:
         for p in self.points:
@@ -64,7 +66,7 @@ class PolyFigure(Figure):
         for poly in self.polyList:
             poly.controlDot.initScreen() 
         self.polyList.sort(key=lambda x:x.controlDot.screen[2])
-        circle = Jarvis(self.points)
+        circle = Jarvis(self.points)[1]
         # circle.sort(key=lambda x:x.screen[2])
         buff = []
         for poly in self.polyList:
@@ -84,68 +86,75 @@ class PolyFigure(Figure):
                 break
         return buff
 
-    def draw(self) -> None:
-        buff = self.getScreenPolyes()
-        for poly in buff:
-            poly.draw()
-            # if checkPoly(poly, circle, maxZ):
-            #     buffer.append(poly)
-        # self.painter.end()
-        # for poly in buffer:
-        #     poly.draw()
-        
+    def makeShadow(self, points: List[Point]) -> List[Polygon]:
+        c = [0, 0, 0]
+        x = [1, 0, 0]
+        y = [0, 1, 0]
+        z = [0, 0, 1]
+        polyX = mat.eq_poly(y, c, z)
+        polyY = mat.eq_poly(x, c, z)
+        polyZ = mat.eq_poly(x, c, y)
+        polygons = [polyX, polyY, polyZ]
+        points = [[], [], []]
+        for p in points:
+            lineL = [ [self.light.coords[0], self.light.coords[1], self.light.coords[2]], [p.coords[0], p.coords[1], p.coords[2]] ]
+            line = mat.parametr_line(lineL)
+            crosses = []
+            for poly in polygons:
+                c = mat.line_poly_cross(line, poly)
+                if  (c != None and c[1] >= 0):
+                    crosses.append([c[0], poly])
+            for item in crosses:
+                x = item[0][0]
+                y = item[0][1]
+                z = item[0][2]
+                if ( (x > 0 or equal(x, 0)) and (y > 0 or equal(y, 0)) and (z > 0 or equal(z, 0)) ):
+                    if item[1] == polyX:
+                        points[0].append(item[0])
+                    elif item[1] == polyY:
+                        points[1].append(item[0])
+                    elif item[1] == polyZ:
+                        points[2].append(item[0])
 
+    def draw(self) -> None:
+        for p in self.points:
+            p.initScreen()   
+        for poly in self.polyList:
+            poly.controlDot.initScreen() 
+        self.polyList.sort(key=lambda x:x.controlDot.screen[2], reverse=True)
+
+        buff = self.getScreenPolyes()
+        for poly in buff: # self.polyList:
+            poly.draw()
         self.controlDot.draw()
 
     @staticmethod
-    def ifCrossFigures() -> bool:
+    def ifCrossFigures():
         borderPoints = []
         for fig in PolyFigure.instances:
-            x1 = min(p.coords[0] for p in fig.points)
-            y1 = min(p.coords[1] for p in fig.points)
-            z1 = min(p.coords[2] for p in fig.points)
+            if fig.__class__.__name__ == PolyFigure.__name__:
+                x1 = min(p.coords[0] for p in fig.points)
+                y1 = min(p.coords[1] for p in fig.points)
+                z1 = min(p.coords[2] for p in fig.points)
 
-            x2 = max(p.coords[0] for p in fig.points)
-            y2 = max(p.coords[1] for p in fig.points)
-            z2 = max(p.coords[2] for p in fig.points)
+                x2 = max(p.coords[0] for p in fig.points)
+                y2 = max(p.coords[1] for p in fig.points)
+                z2 = max(p.coords[2] for p in fig.points)
 
-            borderPoints.append([[x1, y1, z1], [x2, y2, z2]])
+                borderPoints.append([[x1, y1, z1], [x2, y2, z2]])
         # print(borderPoints)
         for i in range(len(borderPoints)):
             A = borderPoints[i]
             for j in range(i+1, len(borderPoints)):
                 B = borderPoints[j]
-                # print([A[1][0], B[0][0]], [B[1][0], A[0][0]], [A[1][1], B[0][1]], [B[1][1] , A[0][1]])
-                # print(A[1][0] >= B[0][0] and B[1][0] >= A[0][0] and A[1][2] >= B[0][2] and B[1][2] >= A[0][2])
-                # print(A[1][1] >= B[0][1] and B[1][1] >= A[0][1] and A[1][2] >= B[0][2] and B[1][2] >= A[0][2])
                 if (A[1][0] >= B[0][0] and B[1][0] >= A[0][0] and A[1][1] >= B[0][1] and B[1][1] >= A[0][1] and
                     A[1][0] >= B[0][0] and B[1][0] >= A[0][0] and A[1][2] >= B[0][2] and B[1][2] >= A[0][2] and
                     A[1][1] >= B[0][1] and B[1][1] >= A[0][1] and A[1][2] >= B[0][2] and B[1][2] >= A[0][2]):
                     return True
-        # return [False, [ [min(p[0][0] for p in borderPoints), min(p[0][1] for p in borderPoints), min(p[0][2] for p in borderPoints)],
-        #                  [max(p[1][0] for p in borderPoints), max(p[1][1] for p in borderPoints), max(p[1][2] for p in borderPoints)] ]]
         return False
 
 def equal(a, b) -> bool:
     return a-0.001 < b < a+0.001
-
-def checkPoly(poly: Polygon, points: List[Point], maxZ) -> bool:
-    borderPoints = []
-    for p in poly.points:
-        if not equal(p.screen[2], maxZ) and p.screen[2] > maxZ:
-            return False
-        else:
-            try:
-                points.index(p)
-                borderPoints.append(p)
-            except ValueError:
-                pass
-    maxBorderZ = max(p.screen[2] for p in borderPoints)
-    for p in poly.points:
-        if not equal(p.screen[2], maxBorderZ) and p.screen[2] > maxBorderZ:
-            return False
-    return True
-
 
 def checkIfDrawed(points: List[Point]) -> bool:
     for p in points:
@@ -181,7 +190,6 @@ def Jarvis(A: List[Point]) -> List[List[Point]]:
     n = len(A)
     P = list(range(n))
     L = []
-    # start point
     for i in range(1,n):
         if A[P[i]].screen[0]<A[P[0]].screen[0]: 
             P[i], P[0] = P[0], P[i]  
@@ -200,86 +208,4 @@ def Jarvis(A: List[Point]) -> List[List[Point]]:
             L.append([ A[H[-2]], A[H[-1]] ])
             P.pop(right)
     L.append([ A[H[-1]], A[H[0]] ])
-    # for l in L:
-    #     print(l[0].name, l[1].name)
-    # print()
-    # return [A[i] for i in H]
-    return L
-
-
-
-
-#  polyList = []
-#             for poly in minV.polygons:
-#                 polyVerts = []
-
-#                 for p in poly.points:
-#                     z = p.screen[2]
-#                     i = 0
-#                     for dot in polyVerts:
-#                         if (z < dot):
-#                             break
-#                         i += 1
-
-#                     polyVerts.insert(i, z)
-#                 flag = True
-
-#                 i = 0
-#                 flag = True
-#                 while (i < len(polyList) and flag):
-#                     item = polyList[i][1]
-#                     length = min(len(item), len(polyVerts))
-                    
-#                     for j in range(length):
-#                         if (polyVerts[j]+0.001 < item[j] < polyVerts[j]-0.001): # buff[j] == item[j]
-#                             continue
-#                         elif (polyVerts[j] > item[j]):
-#                             flag = False
-#                             i -= 1
-#                             break
-#                     i += 1
-#                 polyList.insert(i, [poly, polyVerts])
-#             print('V = ',minV)
-
-        # minX = int(min([ p.screen[0] for p in self.points ]))
-        # maxX = int(max([ p.screen[0] for p in self.points ]))
-
-        # minY = int(min([ p.screen[1] for p in self.points ]))
-        # maxY = int(max([ p.screen[1] for p in self.points ]))
-
-        # maxZ = int(max([ p.screen[2] for p in self.points ]))
-
-        # polyLines = []
-        # for poly in self.polyList:
-        #     poly.computedPen = poly.computeLight()
-        #     polyLines.append([])
-        #     for l in poly.fillLines:
-        #         l.initScreen()
-        #         polyLines[-1].append(mat.parametr_line(l.p1.screen, l.p2.screen))
-        #         # polyLines.append([mat.parametr_line(l.p1.screen, l.p2.screen) for l in poly.fillLines])
-        #     # polyLines.append([ [[l.p1.screen[0], l.p1.screen[1], l.p1.screen[2] ],[l.p2.screen[0], l.p2.screen[1], l.p2.screen[2]]] for l in poly.fillLines ])
-        # for y in range (minY, maxY):
-        #     # seg = [[minX, y], [maxX, y]]
-        #     poly = mat.eq_poly([minX, y, 0], [minX+Config.AXIS_LINE_LENGTH, y, 0], [minX, y, Config.AXIS_LINE_LENGTH], [minX, y, 0])
-        #     polyCrosses = []
-        #     minC = 100000
-        #     maxC = -1
-        #     for i, polyL in enumerate(polyLines):
-        #         polyCrosses.append([self.polyList[i].computedPen, {x: maxZ for x in range(minX, maxX)}])
-        #         for l in polyL:
-        #             c = mat.line_poly_cross(l, poly)
-        #             if c != None and 0 <= c[1] <= 1: 
-        #                 polyCrosses[-1][1][int(c[0][0])] = c[0][2]   # словарь заполняется в виде xi: zi ибо y мы и так знаем
-        #                 # print(c)
-        #                 if (minC > int(c[0][0])):
-        #                     # print(c)
-        #                     minC = int(c[0][0])
-        #                 if (maxC < int(c[0][0])):
-        #                     maxC = int(c[0][0])
-        #         # for crosses in polyCrosses:
-        #     # print (minC, maxC)
-        #     for x in range(minC, maxC):
-        #         minV = min([p for p in polyCrosses], key=lambda p:p[1][x])
-        #         # print (minV, x)
-        #         self.painter.setPen(minV[0])
-        #         self.painter.drawPoint(x, y)
+    return [[A[i] for i in H], L]

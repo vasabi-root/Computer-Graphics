@@ -1,5 +1,7 @@
 from functools import singledispatch
+from itertools import chain
 import string
+from traceback import print_tb
 from typing import List
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPainter, QBrush, QPen
@@ -80,8 +82,8 @@ class Point:
         Установка координат в трехмерном пространстве
         '''
         self.incorrect = [x, y, z]
-        if check:
-            [x, y, z] = Config.checkLimits(x, y, z)
+        # if check:
+        #     [x, y, z] = Config.checkLimits(x, y, z)
             
         self.coords = np.array([ x, y, z, w ], dtype=np.float32)
 
@@ -95,27 +97,31 @@ class Point:
         '''
         self.widget = widget
         
-    def initPainter(self) -> None:
+    def initPainter(self, size=1) -> None:
         '''
         Инициализация рисовалки
         '''
         self.painter = QPainter(self.widget) 
         if self.is_help and self.pen != None:
+            self.pen.setWidth(size)
             self.painter.setPen(self.pen)
-            # self.painter.setBrush(QBrush(Colors.RED_COLOR, Qt.SolidPattern))
+            # self.painter.setBrush(QBrush(Colors.RED, Qt.SolidPattern))
         elif self.is_selected:
-            self.painter.setPen(QPen(Colors.RED_COLOR, 1, Qt.SolidLine))
-            self.painter.setBrush(QBrush(Colors.RED_COLOR, Qt.SolidPattern))
+            self.painter.setPen(QPen(Colors.RED, 1, Qt.SolidLine))
+            self.painter.setBrush(QBrush(Colors.RED, Qt.SolidPattern))
         elif self.is_light:
-            self.painter.setPen(QPen(Colors.WHITE_COLOR, 1, Qt.SolidLine))
-            self.painter.setBrush(QBrush(Colors.WHITE_COLOR, Qt.SolidPattern))
+            self.painter.setPen(QPen(Colors.WHITE, 1, Qt.SolidLine))
+            self.painter.setBrush(QBrush(Colors.WHITE, Qt.SolidPattern))
         # elif self.is_anime:
-        #     self.painter.setPen(QPen(Colors.YELLOW_COLOR, 1, Qt.SolidLine))
-        #     self.painter.setBrush(QBrush(Colors.YELLOW_COLOR, Qt.SolidPattern))
+        #     self.painter.setPen(QPen(Colors.YELLOW, 1, Qt.SolidLine))
+        #     self.painter.setBrush(QBrush(Colors.YELLOW, Qt.SolidPattern))
         else:
-            self.painter.setPen(QPen(Colors.GREEN_COLOR, 1, Qt.SolidLine))
-            self.painter.setBrush(QBrush(Colors.GREEN_COLOR, Qt.SolidPattern))
+            self.painter.setPen(QPen(Colors.GREEN, 1, Qt.SolidLine))
+            self.painter.setBrush(QBrush(Colors.GREEN, Qt.SolidPattern))
         self.painter.setRenderHints(QPainter.Antialiasing)
+    def initHelp(self) -> None:
+        self.painter = QPainter(self.widget) 
+        self.painter.setPen(self.pen)
         
     def setIsLight(self, is_light: bool) -> None:
         '''
@@ -148,12 +154,16 @@ class Point:
         '''
         Рисование точки
         '''
-        self.initPainter()
+        self.initPainter(pixSize)
         self.initScreen()
         if (self.is_help):
-            for i in range(-pixSize, pixSize+1):
-                for j in range(-pixSize, pixSize+1):
-                    self.painter.drawPoint(QPointF(self.screen[0]+i, self.screen[1]+j).toPoint())
+            # self.initHelp()
+            size = pixSize//2
+            self.painter.drawLine(QPointF(self.screen[0]-size, self.screen[1]),QPointF(self.screen[0]+size, self.screen[1]))
+            # for i in range(-size, size+1):
+            #     for j in range(-size, size+1):
+            #         self.painter.drawPoint(QPointF(self.screen[0]+i, self.screen[1]+j))
+                    # self.painter.drawLine(QPointF(self.screen[0]+i, self.screen[1]+j).toPoint(),QPointF(self.screen[0]+i, self.screen[1]+j).toPoint())
         else:
             r = Point.WIDTH / 2
             self.painter.drawEllipse(QRectF(self.screen[0] - r, self.screen[1] - r, Point.WIDTH, Point.HEIGHT))

@@ -49,14 +49,16 @@ class Colors:
     '''
     База данных цветов
     '''
-    YELLOW_COLOR = QColor("#FFD800")
-    BLUE_COLOR = QColor("#0057B8")
-    GREEN_COLOR = QColor("#50AB91")
-    RED_COLOR = Qt.red
+    LIGHT_GREEN = QColor("#70CBB1")
+    YELLOW = QColor("#FFD800")
+    BLUE = QColor("#0057B8")
+    GREEN = QColor("#50AB91")
+    RED = Qt.red
     RED_A120 = QColor(255, 0, 0, 120)
-    BLACK_COLOR = Qt.black
-    WHITE_COLOR = Qt.white
-    BLACK_A100 = QColor(0, 0, 0, 100)
+    BLACK = Qt.black
+    WHITE = Qt.white
+    BLACK = QColor(0, 0, 0, 100)
+    SHADOW = QColor(0,0,0, 80)
     TRANSPARENT = QColor(0, 0, 0, 0)
 
 

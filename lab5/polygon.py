@@ -25,6 +25,7 @@ class Polygon:
     matrix: np.matrix
     lines : List[Line]
     fillLines: List[Line]
+    fillDots: List[Point]
     pixels: List        # расчитанный свет для каждого пикселя
 
     controlDot: Point
@@ -42,6 +43,7 @@ class Polygon:
     diffCoords: List # координаты точек относительно нулевой точки полигона
     diffFill: List
     diffDot: List
+    deffDots: List
 
     def __init__(self, widget: QWidget, points : List[Point], penFill: QPen, penLines: QPen, light: Point, isLines: bool = True, isLight = False, isDraw = True) -> None:
         if (isDraw):
@@ -131,8 +133,11 @@ class Polygon:
 
         self.fillDots = []
         self.diffDots = []
-        self.pixSize = 0
-        step = 1/Config.AXIS_LINE_LENGTH * (self.pixSize*2 +1)
+        stepLine = 1/Config.AXIS_LINE_LENGTH
+        self.pixSize = Config.AXIS_LINE_LENGTH // 25
+        stepPoint = 1/Config.AXIS_LINE_LENGTH * self.pixSize
+        borderSize = self.pixSize / 2
+
 
         minX = min([ p.x() for p in self.points ])
         maxX = max([ p.x() for p in self.points ])
@@ -152,6 +157,29 @@ class Polygon:
             l_param.append(mat.parametr_line(l.p1.coords, l.p2.coords))
         if (polygon[0] == 0 and polygon[1] == 0):
             y = minY
+            while(y <= maxY):
+                poly = mat.eq_poly([minX, y, minZ], [minX+1, y, minZ], [minX, y, minZ+1], [minX, y, minZ])
+                crosses = []
+                for l in l_param:
+                    c = mat.line_poly_cross(l, poly)
+                    if c != None and 0 <= c[1] <= 1: #or (len(crosses) != 0 and crosses.index(c) == ValueError):
+                        crosses.append(c)
+                if (len(crosses) >= 2):
+                    lineL = [crosses[0][0], crosses[1][0]]
+                    lenL = mat.get_len(lineL)
+                    line = mat.parametr_line(lineL[0], lineL[1])
+                    if (lenL == 0):
+                        stepT = 1
+                    else:
+                        stepT = stepPoint / lenL
+                    t = 0
+                    while (t <= 1):
+                        c = mat.get_coords_param_line(line, t)
+                        self.fillDots.append(Point(self.widget, self.matrix, c[0], c[1], c[2]))
+                        self.diffDots.append(self.fillDots[-1].coords - start.coords)
+                        t += stepT
+                y += stepPoint
+            y = minY
             while (y <= maxY):
                 poly = mat.eq_poly([minX, y, minZ], [minX+1, y, minZ], [minX, y, minZ+1], [minX, y, minZ])
                 crosses = []
@@ -163,8 +191,32 @@ class Polygon:
                     self.fillLines.append(Line(self.widget, Point(self.widget, self.matrix, crosses[0][0][0], crosses[0][0][1], crosses[0][0][2]),
                                                             Point(self.widget, self.matrix, crosses[1][0][0], crosses[1][0][1], crosses[1][0][2]), self.penFill))
                     self.diffFill.append(self.fillLines[-1].p1.coords - start.coords)
-                y += step
+                y += stepLine
         else:
+            z = minZ
+            while(z <= maxZ):
+                poly = mat.eq_poly([minX, minY, z], [minX+1, minY, z], [minX, minY+1, z ], [minX, minY, z ])
+                crosses = []
+                for l in l_param:
+                    c = mat.line_poly_cross(l, poly)
+                    if c != None and 0 <= c[1] <= 1: #or (len(crosses) != 0 and crosses.index(c) == ValueError):
+                        crosses.append(c)
+                if (len(crosses) >= 2):
+                    lineL = [crosses[0][0], crosses[1][0]]
+                    lenL = mat.get_len(lineL)
+                    line = mat.parametr_line(lineL[0], lineL[1])
+                    if (lenL == 0):
+                        stepT = 1
+                    else:
+                        stepT = stepPoint / lenL
+                    t = 0
+                    while (t <= 1):
+                        c = mat.get_coords_param_line(line, t)
+                        self.fillDots.append(Point(self.widget, self.matrix, c[0], c[1], c[2]))
+                        self.diffDots.append(self.fillDots[-1].coords - start.coords)
+                        t += stepT
+                z += stepPoint
+
             z = minZ
             while (z <= maxZ):
                 poly = mat.eq_poly([minX, minY, z], [minX+1, minY, z], [minX, minY+1, z ], [minX, minY, z ])
@@ -178,7 +230,12 @@ class Polygon:
                     self.fillLines.append(Line(self.widget, Point(self.widget, self.matrix, crosses[0][0][0], crosses[0][0][1], crosses[0][0][2]),
                                                             Point(self.widget, self.matrix, crosses[1][0][0], crosses[1][0][1], crosses[1][0][2]), self.penFill))
                     self.diffFill.append(self.fillLines[-1].p1.coords - start.coords)
-                z += step
+                z += stepLine
+        # for p in self.diffFill:
+        #     print(p)
+        # print(len(self.fillDots), len(self.fillLines))
+    def setIsLines(self, isLines: bool) -> None:
+        self.isLines = isLines
 
     def fill(self, pen: QPen) -> None:
         # pen = self.penFill
@@ -200,13 +257,9 @@ class Polygon:
             crosses = []
             for l in lines:
                 c = mat.param_cross(seg, l)
-
                 if c != None: #or (len(crosses) != 0 and crosses.index(c) == ValueError):
                     crosses.append(c)
             if (len(crosses) >= 2):
-                # if crosses[0][0] > crosses[1][0]:
-                #     crosses[0][0], crosses[1][0] = crosses[1][0], crosses[0][0]
-
                 self.painter.drawLine(QPointF(crosses[0][0], crosses[0][1]), QPointF(crosses[1][0], crosses[1][1]))
         self.painter.end()
             
@@ -269,22 +322,29 @@ class Polygon:
             p.move(dx, dy, dz, check)
         for l in self.fillLines:
             l.move(dx, dy, dz, check)
+        for p in self.fillDots:
+            p.move(dx, dy, dz, check)
             # l.move(dx, dy, dz, check)
 
-    def setFillPos(self) -> None:
+    def setFillPos(self, check=True) -> None:
         start = self.points[0]
         for i, l in enumerate(self.fillLines):
             # try:
             #     l.setPos(start.incorrect[0] + self.diffFill[i][0], start.incorrect[1] + self.diffFill[i][1], start.incorrect[2] + self.diffFill[i][2])
             # except AttributeError:
             l.setPos(start.x() + self.diffFill[i][0], start.y() + self.diffFill[i][1], start.z() + self.diffFill[i][2])
-        self.controlDot.setCoords(start.x() + self.diffDot[0], start.y() + self.diffDot[1], start.z() + self.diffDot[2])
+        for i, p in enumerate(self.fillDots):
+            p.setCoords(start.x() + self.diffDots[i][0], start.y() + self.diffDots[i][1], start.z() + self.diffDots[i][2])
+        self.controlDot.setCoords(start.x() + self.diffDot[0], start.y() + self.diffDot[1], start.z() + self.diffDot[2], check=check)
 
     def setPos(self, x: float, y: float, z: float, check: bool = True):
         for i, p in enumerate(self.points):
-            p.setCoords(x + self.diffCoords[i][0], y + self.diffCoords[i][1], z + self.diffCoords[i][2])
+            p.setCoords(x + self.diffCoords[i][0], y + self.diffCoords[i][1], z + self.diffCoords[i][2], check=False)
         for i, l in enumerate(self.fillLines):
-            l.setPos(x + self.diffFill[i][0], y + self.diffFill[i][1], z + self.diffFill[i][2], check)
+            l.setPos(x + self.diffFill[i][0], y + self.diffFill[i][1], z + self.diffFill[i][2], check=False)
+        for i, p in enumerate(self.fillDots):
+            p.setCoords(x + self.diffDots[i][0], y + self.diffDots[i][1], z + self.diffDots[i][2])
+        self.controlDot.setCoords(x + self.diffDot[0], y + self.diffDot[1], z + self.diffDot[2])
             # l.setPos(x + self.diffCoords[i][0], y + self.diffCoords[i][1], z + self.diffCoords[i][2])
 
     def getCoords(self) -> List:

@@ -1,4 +1,5 @@
 from cmath import inf
+from datetime import datetime
 from distutils import bcppcompiler
 from email.charset import QP
 import multiprocessing
@@ -73,11 +74,11 @@ class Interface(QWidget):
 
         self.selected_point: Point = None
 
-        self.helpPen = QPen(Colors.RED_COLOR, 1, Qt.DashLine) # Кисть для вспомогательных линий
+        self.helpPen = QPen(Colors.RED, 1, Qt.DashLine) # Кисть для вспомогательных линий
         self.helpPen.setStyle(Qt.CustomDashLine)
         self.helpPen.setDashPattern([4, 3])
 
-        self.pen = QPen(Colors.RED_COLOR, 2, Qt.SolidLine)
+        self.pen = QPen(Colors.RED, 2, Qt.SolidLine)
         
         self.keys = {81: False, 65: False, 87: False, 83: False, 69: False, 68: False,
                      73: False, 75: False, 79: False, 76: False, 80: False, 59: False}
@@ -86,13 +87,15 @@ class Interface(QWidget):
         self.lines = []
         self.isPressed = False
 
+        self.isBorders = False
+
         self.initFigures()
 
     def initRects(self) -> None:
         '''
         Инициализация прямоугольников, лежащим между осями
         '''
-        penLines = QPen(Colors.RED_COLOR, 2)
+        penLines = QPen(Colors.RED, 2)
         penFill = QPen(QColor(penLines.color().red(), penLines.color().green(), penLines.color().blue(), 80), 1)
 
         pX = [ Point(self, self.axis.matrix, 0, 0, 0),
@@ -124,8 +127,10 @@ class Interface(QWidget):
         ''''
         Инициализация фигур
         '''
-        penFill = QPen(Colors.BLUE_COLOR, 1, Qt.SolidLine)
-        penBorder = QPen(Colors.YELLOW_COLOR, 1, Qt.SolidLine)
+        isBorders = False
+
+        penFill = QPen(Colors.GREEN, 1, Qt.SolidLine)
+        penBorder = QPen(Colors.YELLOW, 1, Qt.SolidLine)
         A = Point(self, self.axis.matrix, 0.75, 0.5, 0, name='A')
         B = Point(self, self.axis.matrix, 0.25, 0.25, 0, name='B')
         C = Point(self, self.axis.matrix, 0.25, 0.75, 0, name='C')
@@ -139,7 +144,7 @@ class Interface(QWidget):
         ]
 
         pyramidPoint = Point(self, self.axis.matrix, 0.42, 0.5, -0.25, is_help=False)
-        self.pyramid = PolyFigure(self, self.axis.matrix, pyramidPoint, pyramidList, penFill, penBorder, self.light, True)
+        self.pyramid = PolyFigure(self, self.axis.matrix, pyramidPoint, pyramidList, penFill, penBorder, self.light, True, isBorders=isBorders)
 
         A1 = Point(self, self.axis.matrix, 1.5, 1, 0, name='A1')
         B1 = Point(self, self.axis.matrix, 1.5, 0.5, 0, name='B1')
@@ -160,13 +165,85 @@ class Interface(QWidget):
             [ D2, C2, B2, A2 ]
         ]
 
-        penFill = QPen(Colors.YELLOW_COLOR, 1, Qt.SolidLine)
-        penBorder = QPen(Colors.BLUE_COLOR, 1, Qt.SolidLine)
+        penFill = QPen(Colors.BLUE, 1, Qt.SolidLine)
+        penBorder = QPen(Colors.YELLOW, 1, Qt.SolidLine)
         cubePoint = Point(self, self.axis.matrix, 1.25, 0.75, -0.25, is_help=False)
-        self.cube = PolyFigure(self, self.axis.matrix, cubePoint, cubeList, penFill, penBorder, self.light, True)
+        self.cube = PolyFigure(self, self.axis.matrix, cubePoint, cubeList, penFill, penBorder, self.light, True, isBorders=isBorders)
+        
+        r = 0.35
+        hr = 2*r/3
+        x = 0.6
+        y = 1.4
+        z = 0.25
+        
+        A1 = Point(self, self.axis.matrix, x,    y+r,  z, name='A')
+        B1 = Point(self, self.axis.matrix, x+r/2, y+hr, z+r/2, name='B1')
+        C1 = Point(self, self.axis.matrix, x-r/2, y+hr, z+r/2, name='C1')
+        D1 = Point(self, self.axis.matrix, x-r/2, y+hr, z-r/2, name='D1')
+        E1 = Point(self, self.axis.matrix, x+r/2, y+hr, z-r/2, name='E1')
+        F =  Point(self, self.axis.matrix, x, y, z+r, name='F')
+        G =  Point(self, self.axis.matrix, x-hr, y, z+hr, name='G')
+        H =  Point(self, self.axis.matrix, x-r, y, z, name='H')
+        I =  Point(self, self.axis.matrix, x-hr, y, z-hr, name='I')
+        J =  Point(self, self.axis.matrix, x, y, z-r, name='J')
+        K =  Point(self, self.axis.matrix, x+hr, y, z-hr, name='K')
+        L =  Point(self, self.axis.matrix, x+r, y, z, name='L')
+        M =  Point(self, self.axis.matrix, x+hr, y, z+hr, name='M')
+        A2 = Point(self, self.axis.matrix, x,    y-r,  z, name='A')
+        B2 = Point(self, self.axis.matrix, x+r/2, y-hr, z+r/2, name='B2')
+        C2 = Point(self, self.axis.matrix, x-r/2, y-hr, z+r/2, name='C2')
+        D2 = Point(self, self.axis.matrix, x-r/2, y-hr, z-r/2, name='D2')
+        E2 = Point(self, self.axis.matrix, x+r/2, y-hr, z-r/2, name='E2')
 
-        centerPoint = Point(self, self.axis.matrix, 0.75, 1.25, 0.25)
-        spherePoint = Point(self, self.axis.matrix, 0.75, 1.25,-0.25, is_help=False)
+        sphereList = [
+            [ A1, C1, B1 ],
+            [ A1, D1, C1 ],
+            [ A1, E1, D1 ],
+            [ A1, B1, E1 ],
+
+            [ F, M, B1 ],
+            [ F, B1, C1 ],
+            [ F, C1, G ],
+            [ F, G, C2 ],
+            [ F, C2, B2 ],
+            [ F, B2, M ],
+
+            [ H, G, C1 ],
+            [ H, C1, D1 ],
+            [ H, D1, I ],
+            [ H, I, D2 ],
+            [ H, D2, C2 ],
+            [ H, C2, G ],
+
+            [ J, I, D1 ],
+            [ J, D1, E1 ],
+            [ J, E1, K ],
+            [ J, K, E2 ],
+            [ J, E2, D2 ],
+            [ J, D2, I ],
+
+            [ L, K, E1 ],
+            [ L, E1, B1 ],
+            [ L, B1, M ],
+            [ L, M, B2 ],
+            [ L, B2, E2 ],
+            [ L, E2, K ],
+
+            [ A2, B2, C2 ],
+            [ A2, C2, D2 ],
+            [ A2, D2, E2 ],
+            [ A2, E2, B2 ],
+        ]
+
+
+        # penFill = QPen(Colors.YELLOW_COLOR, 1, Qt.SolidLine)
+        # penBorder = QPen(Colors.BLUE_COLOR, 1, Qt.SolidLine)
+        penFill = QPen(Colors.YELLOW, 1, Qt.SolidLine)
+        penBorder = QPen(Colors.BLUE, 1, Qt.SolidLine)
+        spherePoint = Point(self, self.axis.matrix, x, y, -0.25, is_help=False)
+        
+        self.sphere = PolyFigure(self, self.axis.matrix, spherePoint, sphereList, penFill, penBorder, self.light, True, isBorders=isBorders)
+        # spherePoint = Point(self, self.axis.matrix, 0.75, 1.25,-0.25, is_help=False)
         # self.sphere = Sphere(self, self.axis.matrix, spherePoint, centerPoint, 0.25, penFill, penBorder, self.light)
 
     def paintEvent(self, event) -> None:
@@ -186,7 +263,7 @@ class Interface(QWidget):
 
         brush = QBrush()
         brush.setStyle(Qt.SolidPattern)
-        brush.setColor( QColor("#70CBB1"))
+        brush.setColor(Colors.LIGHT_GREEN)
 
         self.qp.setBrush(brush)
         self.qp.drawRect(-1, -1, w+1, h+1)
@@ -279,18 +356,19 @@ class Interface(QWidget):
         for l in self.lines:
             l.draw()
         self.drawFigures()
-        # self.pyramid.draw()
-        # self.cube.draw()
-        sphereUpdate = False
+        # sphereUpdate = False
         # if ((self.selected_point == self.sphere.controlDot
         #      or self.selected_point == self.light) and not self.lockRects
-        #      or self.isPressed):
+        #      ):
         #      sphereUpdate = True
         #      self.isPressed = False
         # self.sphere.draw(sphereUpdate)
 
         self.light.draw()
-        # self.winLines.draw()
+    
+    def setIsBorders(self) -> None:
+        for fig in PolyFigure.instances:
+            fig.setIsBorders(not fig.isBorders)
 
     def drawFigures(self) -> None:
         for inst in PolyFigure.instances:
@@ -301,58 +379,58 @@ class Interface(QWidget):
             for fig in PolyFigure.instances:
                 fig.draw()
         else:
-            xMin = int(min(p.screen[0] for poly in PolyFigure.instances for p in poly.points))
-            yMin = int(min(p.screen[1] for poly in PolyFigure.instances for p in poly.points))
-
-            xMax = int(max(p.screen[0] for poly in PolyFigure.instances for p in poly.points))
-            yMax = int(max(p.screen[1] for poly in PolyFigure.instances for p in poly.points))
-
-            painter = QPainter(self)
-
-            pixSize = 8
-            borderSize = pixSize//2
-
-            procNum = 6
-            processes = []
-            array = multiprocessing.Array('i', 0)
-            step = (yMax-yMin) // pixSize // procNum
             polygons = []
             for fig in PolyFigure.instances:
                 for poly in fig.getScreenPolyes():
                     polygons.append(poly)
             for poly in polygons:
                 poly.computeLight()
-            # xList = list(range(xMin, xMax, pixSize))
-            # for i in range(6):
-            #     yList = list(range(step*i, step*(i+1), pixSize))
-            #     p = Process(target=iteration, args=(xList, yList, borderSize, Polygon.instances, array))
-            #     processes.append(p)
-            #     p.start()
-            
-            # for p in processes:
-            #     p.join()
-            # for item in array:
-            #     painter.setPen(item[1])
-            #     painter.drawPoint(item[0][0], item[0][1])
 
+            xMin = int(min(p.screen[0] for poly in polygons for p in poly.points))
+            yMin = int(min(p.screen[1] for poly in polygons for p in poly.points))
+
+            xMax = int(max(p.screen[0] for poly in polygons for p in poly.points))
+            yMax = int(max(p.screen[1] for poly in polygons for p in poly.points))
+
+            painter = QPainter(self)
+
+            pixSize = Config.AXIS_LINE_LENGTH // 25
+            borderSize = pixSize // 2
+
+            procNum = 6
+            processes = []
+            array = multiprocessing.Array('i', 0)
+            step = (yMax-yMin) // pixSize // procNum
+            
+            # figures = []
+            # for fig in PolyFigure.instances:
+            #     figures.append(fig.getScreenPolyes())
+            # start = datetime.now()  
+            # for i in range(len(figures)):
+            #     for j in range(i+1, len(figures)):
+            #         for poly1 in figures[i]:
+            #             for poly2 in figures[j]:
+            #                 for point in poly1.fillDots:
+            #                     if ()        
             for y in range(yMin, yMax, pixSize):
                 for x in range(xMin, xMax, pixSize):
-                    A = [x, y, 0]
-                    B = [x, y, 3]
                     zBuff = []
                     for poly in polygons:
                         if (mat.dot_in_poly([x, y], poly.get_screen_lines()) == 1):
                             points = poly.get_screen_points()
                             polyEq = mat.eq_poly(points[0], points[1], points[2], points[0])
-                            line = mat.parametr_line(A, B)
-                            c = mat.line_poly_cross(line, polyEq)
-                            zBuff.append([poly.computedPen, c[0]])
+                            c = mat.get_z_in_poly(x, y, polyEq)
+                            if (c != None):
+                                zBuff.append([poly.computedPen, c])
                     if (len(zBuff) > 0):
-                        minZV = min(zBuff, key=lambda p:p[1][2])
-                        painter.setPen(minZV[0])
-                        for i in range (-borderSize, borderSize+1):
-                            for j in range (-borderSize, borderSize+1):
-                                painter.drawPoint(x+i, y+j)
+                        minZV = min(zBuff, key=lambda p:p[1])
+                        pen = minZV[0]
+                        pen.setWidth(pixSize)
+                        painter.setPen(pen)
+                        painter.drawLine(x-borderSize, y, x+borderSize, y)
+                        # for i in range (-borderSize, borderSize+1):
+                        #     for j in range (-borderSize, borderSize+1):
+                        #         painter.drawPoint(x+i, y+j)
             painter.end()
             for fig in PolyFigure.instances:
                 fig.controlDot.draw()
@@ -487,13 +565,14 @@ class Interface(QWidget):
             self.axis.rotate_z(-alpha)
 
         if (not self.addPoint and self.lockRects):
-            pass
+            # pass
             # if key.key() in (Qt.Key_Backspace, Qt.Key_Delete) and self.selected_point:
             #     self.points.remove(self.selected_point)
             #     self.selected_point = None
             #     self.update()
-            # if(key.key() == Qt.Key_Escape):
-            #     self.points.clear()
+            if(key.key() == Qt.Key_Escape):
+                self.setIsBorders() 
+                # self.points.clear()
         elif (key.key() == Qt.Key_Enter-1):
             self.selectPoint(None)
             self.initRects()
@@ -589,6 +668,19 @@ class Interface(QWidget):
         self.isAnime = False
 
 
+
+# xList = list(range(xMin, xMax, pixSize))
+# for i in range(6):
+#     yList = list(range(step*i, step*(i+1), pixSize))
+#     p = Process(target=iteration, args=(xList, yList, borderSize, Polygon.instances, array))
+#     processes.append(p)
+#     p.start()
+
+# for p in processes:
+#     p.join()
+# for item in array:
+#     painter.setPen(item[1])
+#     painter.drawPoint(item[0][0], item[0][1])
 # array = Array('i', 0)
 def iteration(xList, yList, borderSize, polygons, array):
     for y in yList:
