@@ -1,6 +1,7 @@
 from calendar import isleap
 from email.charset import QP
 import enum
+from pydoc import isdata
 from typing import List
 from PyQt5.QtWidgets import QWidget, qApp
 from PyQt5.QtGui import QPainter, QBrush, QPen
@@ -8,6 +9,7 @@ from PyQt5.QtGui import QMouseEvent
 from PyQt5.QtGui import QColor, QPixmap, QImage, qRgba
 from PyQt5.QtCore import Qt, QRectF, QPointF, QPoint
 import numpy as np
+from lab5.mathematics import cross
 
 from shared import Config, Colors, Light, normalize, RotationMatrices
 from point import Point
@@ -16,13 +18,19 @@ from axis import Axis
 import mathematics as mat
 
 class Polygon:
+    instances = []
     widget: QWidget
     
-    # points : List
+    points : List[Point] 
     matrix: np.matrix
     lines : List[Line]
+    fillLines: List[Line]
+    fillDots: List[Point]
     pixels: List        # расчитанный свет для каждого пикселя
+
+    controlDot: Point
     image: QImage
+
 
     painter: QPainter
     penFill: QPen   # перо для заливки
@@ -33,35 +41,55 @@ class Polygon:
     isLight: bool    # надо ли уучитывать свет
 
     diffCoords: List # координаты точек относительно нулевой точки полигона
+    diffFill: List
+    diffDot: List
+    deffDots: List
 
-    def __init__(self, widget: QWidget, matrix: np.array, points : List, penFill: QPen, penLines: QPen, light: Point, isLines: bool = True, isLight = False) -> None:
+    def __init__(self, widget: QWidget, points : List[Point], penFill: QPen, penLines: QPen, light: Point, isLines: bool = True, isLight = False, isDraw = True) -> None:
+        if (isDraw):
+            self.__class__.instances.append(self)
         self.widget = widget
-        self.matrix = matrix
 
         self.penFill = penFill
         self.penLines = penLines
+        self.computedPen = penFill
         self.light = light
 
-        self.setLines(points)
+        self.matrix = points[0].matrix
+
+        self.points = points
+
+        self.setLines()
 
         self.isLines = isLines
         self.isLight = isLight
 
+        self.isDraw = isDraw
+
+        self.initFillLines()
+
         # if self.isLight:
         #     self.computeLight()
+
+    def setIsDraw(self, isDraw: bool) -> None:
+        self.isDraw = isDraw
     
-    def setLines(self, points) -> None:
+    def setLines(self) -> None:
         self.lines = []
         self.diffCoords = []
         # self.lines = [ Line(self.widget, self.matrix, points[i], points[(i+1) % len(points)], self.penLines) 
         #                for i in range(0, len(points))]
-        start = points[0]
-        for i, p in enumerate(points):
-            self.lines.append(Line(self.widget, self.matrix, p, points[(i+1) % len(points)], self.penLines))
-            self.diffCoords.append([ self.lines[-1].coords[0][0] - start[0],
-                                     self.lines[-1].coords[0][1] - start[1],
-                                     self.lines[-1].coords[0][2] - start[2] ])
-        
+        start = self.points[0]
+        coords = np.array([0, 0, 0, 0], dtype=np.float64)
+        for i, p in enumerate(self.points):
+            p.addPolygon(self)
+            coords += p.coords
+            self.lines.append(Line(self.widget, p, self.points[(i+1) % len(self.points)], self.penLines))
+            self.diffCoords.append(p.coords - start.coords)
+        coords /= len(self.points)
+        self.controlDot = Point(self.widget, self.matrix, coords[0], coords[1], coords[2])
+        self.diffDot = self.controlDot.coords - start.coords
+
 
     def initPainter(self, pen: QPen) -> None:
         '''
@@ -70,68 +98,26 @@ class Polygon:
         self.painter = QPainter(self.widget)
         self.painter.setPen(pen)
         self.painter.setRenderHints(QPainter.Antialiasing)
+
+    def setIsDrawed(self) -> None:
+        for p in self.points:
+            p.is_drawed = True
     
-    def computeLight(self) -> None:
-        # pen = self.penFill
-        # for l in self.lines:
-        #     l.initScreen() 
-
-        # minY = int(min([ p[1] for l in self.lines for p in l.screen ]) - 1)
-        # maxY = int(max([ p[1] for l in self.lines for p in l.screen ]) + 1)
-
-        # minX = int(min([ p[0] for l in self.lines for p in l.screen ]) - 1)
-        # maxX = int(max([ p[0] for l in self.lines for p in l.screen ]) + 1)
-
-        poly = mat.eq_poly(self.lines[0].coords[0], self.lines[1].coords[0], self.lines[2].coords[0], self.lines[0].coords[0])
+    def computeLight(self) -> QPen:
+        poly = mat.eq_poly(self.points[0].coords, self.points[1].coords, self.points[2].coords, self.points[0].coords)
         N = np.array([poly[0], poly[1], poly[2]])
         N = N/np.sqrt((N*N).sum())
         color = self.penFill.color()
-
-        # lines = [ [[l.screen[0][0], l.screen[0][1]],[l.screen[1][0], l.screen[1][1]]] for l in self.lines ]
-        # polyScreenP = self.get_screen_points()
-        # polyScreen = mat.eq_poly(polyScreenP[0], polyScreenP[1], polyScreenP[2], polyScreenP[0])
-        # reverse = np.linalg.inv(self.matrix)
-
-        # self.image = QImage(self.widget.width(), self.widget.height(), QImage.Format.Format_RGBA64)
-        # self.image.fill(Colors.TRANSPARENT)
-        P = self.lines[0].coords[0]
+        P = self.points[0].coords
         i = Light.computeLightForDot(self.light,P, N)
         c = QColor(int(color.red()*i), int(color.green()*i), int(color.blue()*i), color.alpha())
         pen = QPen(c, 2, Qt.SolidLine)
-        self.fill(pen)
-        
-
-        # for y in range(minY, maxY, 1):
-        #     seg = [[minX, y], [maxX, y]]
-        #     crosses = []
-        #     for l in lines:
-        #         c = mat.param_cross(seg, l)
-        #         if c != None:
-        #             crosses.append(c)
-        #     if (len(crosses) >= 2):
-        #         minCx = int(min([c[0] for c in crosses]))
-        #         maxCx = int(max([c[0] for c in crosses]))
-        #         for x in range (minCx, maxCx+1):
-        #             z = mat.get_z_in_poly(x, y, polyScreen)
-                    
-        #             if z != None:
-        #                 P = np.dot(reverse, np.array([x, y, z, 1]))
-        #                 i = self.computeLightForDot(P, N)
-        #                 # print(i)
-        #                 c = qRgba(int(color.red()*i), int(color.green()*i), int(color.blue()*i), color.alpha())
-        #                 if i != 0.5:
-        #                     print(i)
-        #                     self.setPix(x, y, c)
-
-        # self.initPainter(self.penFill)
-        # self.painter.drawImage(QPoint(0,0),self.image)
-        # self.painter.end()
-
-
+        self.computedPen = pen
+        return pen
         
     
     def computeLightForDot(self, P: np.array, N: np.array): 
-        i = 0.5
+        i = 0.5 
         
         l = self.light.coords - P
         L = np.array([l[0], l[1], l[2]])
@@ -141,34 +127,141 @@ class Polygon:
             i += self.light.intensity*N_dot_L / (np.sqrt((N*N).sum())* np.sqrt((L*L).sum()))
         return i
 
+    def initFillLines(self) -> None:
+        self.fillLines = []
+        self.diffFill = []
+
+        self.fillDots = []
+        self.diffDots = []
+        stepLine = 1/Config.AXIS_LINE_LENGTH
+        self.pixSize = Config.AXIS_LINE_LENGTH // 25
+        stepPoint = 1/Config.AXIS_LINE_LENGTH * self.pixSize
+        borderSize = self.pixSize / 2
+
+
+        minX = min([ p.x() for p in self.points ])
+        maxX = max([ p.x() for p in self.points ])
+
+        minY = min([ p.y() for p in self.points ])
+        maxY = max([ p.y() for p in self.points ])
+
+        minZ = min([ p.z() for p in self.points ])
+        maxZ = max([ p.z() for p in self.points ])
+
+        start = self.points[0]
+
+        polygon = mat.eq_poly(self.points[0].coords, self.points[1].coords, self.points[2].coords, self.points[0].coords)
+        # print(polygon)
+        l_param = []
+        for l in self.lines:
+            l_param.append(mat.parametr_line(l.p1.coords, l.p2.coords))
+        if (polygon[0] == 0 and polygon[1] == 0):
+            # y = minY
+            # while(y <= maxY):
+            #     poly = mat.eq_poly([minX, y, minZ], [minX+1, y, minZ], [minX, y, minZ+1], [minX, y, minZ])
+            #     crosses = []
+            #     for l in l_param:
+            #         c = mat.line_poly_cross(l, poly)
+            #         if c != None and 0 <= c[1] <= 1: #or (len(crosses) != 0 and crosses.index(c) == ValueError):
+            #             crosses.append(c)
+            #     if (len(crosses) >= 2):
+            #         lineL = [crosses[0][0], crosses[1][0]]
+            #         lenL = mat.get_len(lineL)
+            #         line = mat.parametr_line(lineL[0], lineL[1])
+            #         if (lenL == 0):
+            #             stepT = 1
+            #         else:
+            #             stepT = stepPoint / lenL
+            #         t = 0
+            #         while (t <= 1):
+            #             c = mat.get_coords_param_line(line, t)
+            #             self.fillDots.append(Point(self.widget, self.matrix, c[0], c[1], c[2]))
+            #             self.diffDots.append(self.fillDots[-1].coords - start.coords)
+            #             t += stepT
+            #     y += stepPoint
+            y = minY
+            while (y <= maxY):
+                poly = mat.eq_poly([minX, y, minZ], [minX+1, y, minZ], [minX, y, minZ+1], [minX, y, minZ])
+                crosses = []
+                for l in l_param:
+                    c = mat.line_poly_cross(l, poly)
+                    if c != None and 0 <= c[1] <= 1: #or (len(crosses) != 0 and crosses.index(c) == ValueError):
+                        crosses.append(c)
+                if (len(crosses) >= 2):
+                    self.fillLines.append(Line(self.widget, Point(self.widget, self.matrix, crosses[0][0][0], crosses[0][0][1], crosses[0][0][2]),
+                                                            Point(self.widget, self.matrix, crosses[1][0][0], crosses[1][0][1], crosses[1][0][2]), self.penFill))
+                    self.diffFill.append(self.fillLines[-1].p1.coords - start.coords)
+                y += stepLine
+        else:
+            # z = minZ
+            # while(z <= maxZ):
+            #     poly = mat.eq_poly([minX, minY, z], [minX+1, minY, z], [minX, minY+1, z ], [minX, minY, z ])
+            #     crosses = []
+            #     for l in l_param:
+            #         c = mat.line_poly_cross(l, poly)
+            #         if c != None and 0 <= c[1] <= 1: #or (len(crosses) != 0 and crosses.index(c) == ValueError):
+            #             crosses.append(c)
+            #     if (len(crosses) >= 2):
+            #         lineL = [crosses[0][0], crosses[1][0]]
+            #         lenL = mat.get_len(lineL)
+            #         line = mat.parametr_line(lineL[0], lineL[1])
+            #         if (lenL == 0):
+            #             stepT = 1
+            #         else:
+            #             stepT = stepPoint / lenL
+            #         t = 0
+            #         while (t <= 1):
+            #             c = mat.get_coords_param_line(line, t)
+            #             self.fillDots.append(Point(self.widget, self.matrix, c[0], c[1], c[2]))
+            #             self.diffDots.append(self.fillDots[-1].coords - start.coords)
+            #             t += stepT
+            #     z += stepPoint
+
+            z = minZ
+            while (z <= maxZ):
+                poly = mat.eq_poly([minX, minY, z], [minX+1, minY, z], [minX, minY+1, z ], [minX, minY, z ])
+                crosses = []
+
+                for l in l_param:
+                    c = mat.line_poly_cross(l, poly)
+                    if c != None and 0 <= c[1] <= 1: #or (len(crosses) != 0 and crosses.index(c) == ValueError):
+                        crosses.append(c)
+                if (len(crosses) >= 2):
+                    self.fillLines.append(Line(self.widget, Point(self.widget, self.matrix, crosses[0][0][0], crosses[0][0][1], crosses[0][0][2]),
+                                                            Point(self.widget, self.matrix, crosses[1][0][0], crosses[1][0][1], crosses[1][0][2]), self.penFill))
+                    self.diffFill.append(self.fillLines[-1].p1.coords - start.coords)
+                z += stepLine
+        # for p in self.diffFill:
+        #     print(p)
+        # print(len(self.fillDots), len(self.fillLines))
+    def setIsLines(self, isLines: bool) -> None:
+        self.isLines = isLines
+
     def fill(self, pen: QPen) -> None:
         # pen = self.penFill
         for l in self.lines:
             l.initScreen() 
 
-        minY = int(min([ p[1] for l in self.lines for p in l.screen ]) - 1)
-        maxY = int(max([ p[1] for l in self.lines for p in l.screen ]) + 1)
+        minX = int(min([ x for l in self.lines for x in [l.p1.screen[0], l.p2.screen[0]] ]) - 1)
+        maxX = int(max([ x for l in self.lines for x in [l.p1.screen[0], l.p2.screen[0]] ]) + 1)
 
-        minX = int(min([ p[0] for l in self.lines for p in l.screen ]) - 1)
-        maxX = int(max([ p[0] for l in self.lines for p in l.screen ]) + 1)
+        minY = int(min([ y for l in self.lines for y in [l.p1.screen[1], l.p2.screen[1]] ]) - 1)
+        maxY = int(max([ y for l in self.lines for y in [l.p1.screen[1], l.p2.screen[1]] ]) + 1)
 
-        lines = [ [[l.screen[0][0], l.screen[0][1]],[l.screen[1][0], l.screen[1][1]]] for l in self.lines ]
+        lines = [ [[l.p1.screen[0], l.p1.screen[1]],[l.p2.screen[0], l.p2.screen[1]]] for l in self.lines ]
         
 
+        self.initPainter(pen)
         for y in range(minY, maxY, 1):
-            self.initPainter(pen)
             seg = [[minX, y], [maxX, y]]
             crosses = []
             for l in lines:
                 c = mat.param_cross(seg, l)
-
                 if c != None: #or (len(crosses) != 0 and crosses.index(c) == ValueError):
                     crosses.append(c)
             if (len(crosses) >= 2):
-                # if crosses[0][0] > crosses[1][0]:
-                #     crosses[0][0], crosses[1][0] = crosses[1][0], crosses[0][0]
                 self.painter.drawLine(QPointF(crosses[0][0], crosses[0][1]), QPointF(crosses[1][0], crosses[1][1]))
-            self.painter.end()
+        self.painter.end()
             
     
     def setPix(self, x: float, y: float, c: int):
@@ -176,42 +269,89 @@ class Polygon:
             p = QPointF(x, y)
             self.image.setPixel(p.toPoint(), c)
 
-    def draw(self, transparent: int = 80) -> None:
+    def minZ(self) -> float:
+        return min([p.screen[2] for p in self.points])
+
+    def maxZ(self) -> float:
+        return max([p.screen[2] for p in self.points])
+
+    def draw(self, updateScreen:bool = False, transparent: int = 80) -> None:
+        for p in self.points:
+                p.is_drawed = False
+        if updateScreen:
+            for p in self.points:
+                p.initScreen()
         if self.isLight:
-            self.computeLight()
+            self.computedPen = self.computeLight()
+            # for p in self.fillDots:
+            #     p.setPen(self.computedPen)
+            #     p.draw(self.pixSize)
+            for l in self.fillLines:
+                l.setPen(self.computedPen)
+                l.draw(updateScreen=True)
         else:
-            self.fill(self.penFill)
+            for l in self.fillLines:
+                l.draw(updateScreen=True)
+            # for p in self.fillDots:
+            #     p.draw(self.pixSize)
         if self.isLines:
             for l in self.lines:
-                l.draw()
+                l.draw(updateScreen=True)
 
     def get_screen_lines(self) -> List:
         screen_lines = []
+        self.initScreen()
         for l in self.lines:
-            l.initScreen()
-            screen_lines.append(l.screen)
+            screen_lines.append([l.p1.screen, l.p2.screen])
         return screen_lines
 
     def get_screen_points(self) -> List:
         screen_points = []
-        for l in self.lines:
-            l.initScreen()
-            screen_points.append(l.screen[0])
+        self.initScreen()
+        for p in self.points:
+            screen_points.append(p.screen)
         return screen_points
 
+    def initScreen(self) -> None:
+        self.controlDot.initScreen()
+        for p in self.points:
+            p.initScreen()
+
     def move(self, dx: float, dy: float, dz: float, check: bool = True):
-        for l in self.lines:
+        for p in self.points:
+            p.move(dx, dy, dz, check)
+        for l in self.fillLines:
             l.move(dx, dy, dz, check)
+        for p in self.fillDots:
+            p.move(dx, dy, dz, check)
+            # l.move(dx, dy, dz, check)
+
+    def setFillPos(self, check=True) -> None:
+        start = self.points[0]
+        for i, l in enumerate(self.fillLines):
+            # try:
+            #     l.setPos(start.incorrect[0] + self.diffFill[i][0], start.incorrect[1] + self.diffFill[i][1], start.incorrect[2] + self.diffFill[i][2])
+            # except AttributeError:
+            l.setPos(start.x() + self.diffFill[i][0], start.y() + self.diffFill[i][1], start.z() + self.diffFill[i][2])
+        for i, p in enumerate(self.fillDots):
+            p.setCoords(start.x() + self.diffDots[i][0], start.y() + self.diffDots[i][1], start.z() + self.diffDots[i][2])
+        self.controlDot.setCoords(start.x() + self.diffDot[0], start.y() + self.diffDot[1], start.z() + self.diffDot[2], check=check)
 
     def setPos(self, x: float, y: float, z: float, check: bool = True):
-        for i, l in enumerate(self.lines):
-            l.setPos(x + self.diffCoords[i][0], y + self.diffCoords[i][1], z + self.diffCoords[i][2])
+        for i, p in enumerate(self.points):
+            p.setCoords(x + self.diffCoords[i][0], y + self.diffCoords[i][1], z + self.diffCoords[i][2], check=False)
+        for i, l in enumerate(self.fillLines):
+            l.setPos(x + self.diffFill[i][0], y + self.diffFill[i][1], z + self.diffFill[i][2], check=False)
+        for i, p in enumerate(self.fillDots):
+            p.setCoords(x + self.diffDots[i][0], y + self.diffDots[i][1], z + self.diffDots[i][2])
+        self.controlDot.setCoords(x + self.diffDot[0], y + self.diffDot[1], z + self.diffDot[2])
+            # l.setPos(x + self.diffCoords[i][0], y + self.diffCoords[i][1], z + self.diffCoords[i][2])
 
     def getCoords(self) -> List:
         return self.lines[0].coords[0]
 
     def animeMove(self, d: float, mode: int, curPoint: Point, pointMode: bool = True) -> None:
-        if (-Config.MAX_COORD <= self.lines[0].coords[0][mode] + d <= Config.MAX_COORD):
+        if (-Config.MAX_COORD <= self.points[0].coords[mode] + d <= Config.MAX_COORD):
             self.isAnime = True
             t = 0.0
             step = 0.2

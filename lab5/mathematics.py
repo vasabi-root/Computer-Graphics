@@ -1,10 +1,8 @@
+from cmath import sqrt
 from typing import List
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
 import numpy as np
-
-from point import Point
-from line import Line
 
 def mk_OP(a):      # построение ограничительного прямоугольника
     x1 = min(a[0][0],a[1][0])
@@ -120,6 +118,12 @@ def get_coords_param_line(line: List, t: float) -> List: # координаты 
         z = line[2][0]*t + line[2][1]
     return [x, y, z]
 
+def get_len(line: List) -> float:
+    l = [ line[1][0] - line[0][0],
+          line[1][1] - line[0][1],
+          line[1][2] - line[0][2] ]
+    return sqrt(l[0]**2 + l[1]**2 + l[2]**2).real
+
 def eq_poly(A: List, B: List, C: List, M: List) -> List: # Ax + By + Cz + D = 0
     '''
     Составляет уравнение плоскости вида Ax + By + Cz + D = 0, параллельной той, 
@@ -168,9 +172,12 @@ def line_poly_cross(line: List, poly: List) -> List:
     num = -(A*x1 + B*y1 + C*z1 + D)
     den = A*Px + B*Py + C*Pz
 
-    t = num / den
+    if (den != 0):
+        t = num / den
+    else:
+        return None
 
-    return get_coords_param_line(line, t)
+    return [get_coords_param_line(line, t), t]
 
 def param_cross(a: List, b: List) -> List:
     '''
@@ -203,6 +210,10 @@ def param_cross(a: List, b: List) -> List:
 
 
 
+        
+# a = [[1,5],[3,6],[5,6],[3,4],[2,4],[1,3],[5,4],[5,2],[3,2],[1,1],[3,1]]
+# p = Jarvis(a,11)
+# print(p)
 
 
 

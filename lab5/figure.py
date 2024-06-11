@@ -25,10 +25,10 @@ class Figure:
 
     isLight: bool
 
-    diffCoords: List        # расстояния от контрольной точки до линий (для перемещения фигуры)
+    diffCoords: List        # расстояния от контрольной точки до вершин фигуры (для перемещения фигуры)
 
     def __init__(self, widget: QWidget, matrix: np.array, controlDot: Point, penFill: QPen, penBorder: QPen, light: Point, isLight: bool = False) -> None:
-        self.__class__.instances.append(self) # учёт всех объектов
+        # self.__class__.instances.append(self) # учёт всех объектов
 
         self.widget = widget
         self.matrix = matrix
@@ -79,22 +79,23 @@ def moveDecorator(func):
 
 # @moveDecorator
 @Point.move.register
-def _(p: Point, dx: float, dy: float, dz: float, w: float, check: bool = True) -> None:
+def _(p: Point, dx: float, dy: float, dz: float, w: float=1, check: bool = True) -> None:
     p.setCoords(p.coords[0] + dx, p.coords[1] + dy, p.coords[2] + dz, w, check)
 
-    fig = Figure.checkBelong(p)         
-    if fig:                   # если точка управляющая
-        fig.setPos()          # то синхронизируем движение точки с фигурой
+    # fig = Figure.checkBelong(p)         
+    # if fig:                   # если точка управляющая
+    #     fig.setPos()          # то синхронизируем движение точки с фигурой
 
 
 
 @Point.setCoords.register
-def _(p: Point, x: float, y: float, z: float, w: float, check: bool = True) -> None:
+def _(p: Point, x: float, y: float, z: float, w: float=1, check: bool = True) -> None:
     '''
     Установка координат в трехмерном пространстве
     '''
-    if check:
-        [x, y, z] = Config.checkLimits(x, y, z)
+    p.incorrect = [x, y, z]
+    # if check:
+    #     [x, y, z] = Config.checkLimits(x, y, z)
     p.coords = np.array([ x, y, z, w ], dtype=np.float64)
 
     fig = Figure.checkBelong(p)
